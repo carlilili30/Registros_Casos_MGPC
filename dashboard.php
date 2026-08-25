@@ -8,7 +8,7 @@ $totalRegistros = $conexion->query('SELECT COUNT(*) AS total FROM registros')->f
 $totalDocumentos = $conexion->query('SELECT COUNT(*) AS total FROM registro_documentos')->fetch_assoc()['total'] ?? 0;
 ?>
 
-<h1>Panel principal HOLA</h1>
+<h1>Panel principal</h1>
 <p>Bienvenida(o), <?php echo e(usuarioActualNombre()); ?>.</p>
 
 <div class="cards">
