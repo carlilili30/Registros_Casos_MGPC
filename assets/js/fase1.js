@@ -47,7 +47,7 @@ function fillOthers(){const main=ut.value,chosen=other.map(x=>x.value).filter(Bo
 other.forEach(sel=>{const keep=sel.value
 sel.innerHTML='<option value="">Seleccione una UT</option>'+units.filter(x=>String(v(x,'id_seccxut'))!==main).map(x=>`<option value="${v(x,'id_seccxut')}">${v(x,'claveUT')} · ${v(x,'nombreUT')}</option>`).join('')
 sel.value=keep
-[...sel.options].forEach(o=>{if(o.value)o.disabled=chosen.includes(o.value)&&o.value!==keep})})}
+forEach(o=>{if(o.value)o.disabled=chosen.includes(o.value)&&o.value!==keep})})}
 function toggle(){const yes=qs('#involucra_otra_ut').value==='Sí'
 otherBox.classList.toggle('hidden',!yes)
 other.forEach(x=>{x.disabled=!yes
@@ -67,7 +67,7 @@ await API.update(CONFIG.tables.cases,id,{folio:folio(n,id),fase_actual:2})
 await API.create(CONFIG.tables.phases,{id_caso:Number(id),fase:1,estatus:'CONCLUIDA',observaciones:'Registro inicial',datos_json:JSON.stringify(extra),fecha_fin:localDateTime()})
 const files=qs('#archivos').files
 if(files.length){const fd=new FormData()
-[...files].forEach(f=>fd.append('files[]',f))
+forEach(f=>fd.append('files[]',f))
 fd.append('descripcion',`Caso ${id}, fase 1`)
 const up=await API.upload(CONFIG.tables.files,fd)
 for(const f of up.subidos||[])await API.create(CONFIG.tables.caseFiles,{id_caso:Number(id),id_archivo:Number(f.id),fase:1,nombre_original:f.nombre_original})}localStorage.setItem('mgpc_current_case',id)
