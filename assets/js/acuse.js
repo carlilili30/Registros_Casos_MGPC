@@ -2,6 +2,25 @@ import {API} from './api.js'
 import {CONFIG} from './config.js'
 import {qs,esc,getCaseId} from './common.js'
 (async()=>{const c=await API.record(CONFIG.tables.cases,getCaseId())
-qs('#acuse').innerHTML=`<h1>Acuse de registro</h1><p><b>Folio:</b> ${esc(c.folio||c.id)}</p><p><b>Fecha:</b> ${esc(c.fecha_registro)}</p><hr><p><b>Solicitante:</b> ${esc(c.nombre_solicitante)}</p><p><b>Contacto:</b> ${esc(c.telefono)} · ${esc(c.correo)}</p><p><b>Distrito:</b> ${esc(c.distrito)} | <b>UT:</b> ${esc(c.unidad_territorial)}</p><p><b>Tipo:</b> ${esc(c.tipo_caso)}</p><p><b>Clasificación:</b> ${esc(c.clasificacion)}</p><p><b>Descripción:</b> ${esc(c.descripcion)}</p><div class="firma">Sello y firma de recepción</div>`})().catch(e=>qs('#acuse').textContent=e.message)
+qs('#acuse').innerHTML=`<h1>Acuse de registro</h1>
+<p><b>Folio:</b>
+ ${esc(c.folio||c.id)}</p>
+<p><b>Fecha:</b>
+ ${esc(c.fecha_registro)}</p>
+<hr><p><b>Solicitante:</b>
+ ${esc(c.nombre_solicitante)}</p>
+<p><b>Contacto:</b>
+ ${esc(c.telefono)} · ${esc(c.correo)}</p>
+<p><b>Distrito:</b>
+ ${esc(c.distrito)} | <b>UT:</b>
+ ${esc(c.unidad_territorial)}</p>
+<p><b>Tipo:</b>
+ ${esc(c.tipo_caso)}</p>
+<p><b>Clasificación:</b>
+ ${esc(c.clasificacion)}</p>
+<p><b>Descripción:</b>
+ ${esc(c.descripcion)}</p>
+<div class="firma">Sello y firma de recepción</div>
+`})().catch(e=>qs('#acuse').textContent=e.message)
 qs('#print').onclick=()=>print()
 
