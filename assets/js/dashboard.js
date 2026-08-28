@@ -6,5 +6,12 @@ initShell()
 qs('#total').textContent=a.length
 qs('#process').textContent=a.filter(x=>x.estatus!=='CONCLUIDO').length
 qs('#done').textContent=a.filter(x=>x.estatus==='CONCLUIDO').length
-qs('#recent').innerHTML=a.slice(-10).reverse().map(x=>`<tr><td>${esc(x.folio||x.id)}</td><td>${esc(x.distrito)}</td><td>${esc(x.clasificacion)}</td><td>Fase ${esc(x.fase_actual)}</td><td><a href="casos/detalle.html?id=${x.id}">Ver</a></td></tr>`).join('')}catch(e){notify(e.message,'error')}})()
+qs('#recent').innerHTML=a.slice(-10).reverse().map(x=>`<tr><td>${esc(x.folio||x.id)}</td>
+<td>${esc(x.distrito)}</td>
+<td>${esc(x.clasificacion)}</td>
+<td>Fase ${esc(x.fase_actual)}</td>
+<td><a href="casos/detalle.html?id=${x.id}">Ver</a>
+</td>
+</tr>
+`).join('')}catch(e){notify(e.message,'error')}})()
 

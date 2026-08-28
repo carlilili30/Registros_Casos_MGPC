@@ -9,8 +9,10 @@ const labels=['Registro','Sistema SAM','Encuestas','Portal SAM','Integración','
 async function load(){if(!id){notify('Selecciona un caso para continuar.','error')
 qs('#phaseForm button[type=submit]').disabled=true
 return}const c=await API.record(CONFIG.tables.cases,id)
-qs('#caseInfo').innerHTML=`Caso: <strong>${esc(c.folio||id)}</strong>`
-qs('#timeline').innerHTML=labels.map((x,i)=>`<div class="step ${i+1<Number(c.fase_actual)?'done':i+1===Number(c.fase_actual)?'active':''} ${c.clasificacion===CONFIG.classificationSkip&&i+1===4?'skipped':''}">${i+1}. ${x}</div>`).join('')}
+qs('#caseInfo').innerHTML=`Caso: <strong>${esc(c.folio||id)}</strong>
+`
+qs('#timeline').innerHTML=labels.map((x,i)=>`<div class="step ${i+1<Number(c.fase_actual)?'done':i+1===Number(c.fase_actual)?'active':''} ${c.clasificacion===CONFIG.classificationSkip&&i+1===4?'skipped':''}">${i+1}. ${x}</div>
+`).join('')}
 qs('#phaseForm')?.addEventListener('submit',async e=>{e.preventDefault()
 const btn=e.currentTarget.querySelector('button[type=submit]')
 btn.disabled=true

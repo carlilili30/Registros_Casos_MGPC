@@ -8,7 +8,7 @@ initShell()
 const id=getCaseId()
 if(phase>1&&!id){notify('Selecciona un caso antes de continuar.','error')
 qsa('button[type=submit]').forEach(x=>x.disabled=true)}
-const labels=['Registro','Sistema SAM','Encuestas','Portal SAM','Integración','Expediente','Revisión CG','Cédula']
+const labels=['Registro','Estratos de Encuestas','Encuestas','Portal Revisión y Mapeo de Unidades Territoriales','Integración','Expediente','Revisión CG','Cédula']
 
 async function load(){if(!id||phase===1){renderTimeline(1,false)
 return}try{const c=await API.record(CONFIG.tables.cases,id)
