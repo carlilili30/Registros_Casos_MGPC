@@ -8,10 +8,17 @@ export const CONFIG = {
     phases: 'seguimiento_fases',
     files: 'archivos',
     users: 'usuarios',
-    caseFiles: 'casos_archivos'
+    caseFiles: 'casos_archivos',
+    territorial: 'seccxut'
   },
 
   maxFileMB: 25,
-  allowedFiles: ['application/pdf', 'image/jpeg', 'image/png'],
+
+  allowedFiles: [
+    'application/pdf',
+    'image/jpeg',
+    'image/png'
+  ],
+
   classificationSkip: 'CAMBIO DE NOMENCLATURA'
 };

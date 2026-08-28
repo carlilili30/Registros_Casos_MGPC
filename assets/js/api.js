@@ -1,7 +1,13 @@
 import { CONFIG } from './config.js';
 
-async function request(path, { method = 'GET', body = null, headers = {} } = {}) {
-  const options = { method, headers: { ...headers } };
+async function request(
+  path,
+  { method = 'GET', body = null, headers = {} } = {}
+) {
+  const options = {
+    method,
+    headers: { ...headers }
+  };
 
   if (body instanceof FormData) {
     options.body = body;
@@ -27,9 +33,15 @@ async function request(path, { method = 'GET', body = null, headers = {} } = {})
   }
 
   if (!response.ok) {
-    const message = data && typeof data === 'object' && !(data instanceof Blob)
-      ? (data.error || data.message || `Error API ${response.status}`)
-      : `Error API ${response.status}`;
+    const message =
+      data &&
+      typeof data === 'object' &&
+      !(data instanceof Blob)
+        ? (data.error ||
+           data.message ||
+           `Error API ${response.status}`)
+        : `Error API ${response.status}`;
+
     throw new Error(message);
   }
 
@@ -45,18 +57,26 @@ export const API = {
     request(`/record/${table}/${encodeURIComponent(id)}`),
 
   filter: (table, params = {}) =>
-    request(`/filter/${table}?${new URLSearchParams(params).toString()}`),
+    request(
+      `/filter/${table}?${new URLSearchParams(params).toString()}`
+    ),
 
   // Aunque usa POST, /search es una operacion de lectura.
   search: (table, body) =>
-    request(`/search/${table}`, { method: 'POST', body }),
+    request(`/search/${table}`, {
+      method: 'POST',
+      body
+    }),
 
   info: (table) =>
     request(`/info/${table}`),
 
   // Escritura
   create: (table, properties) =>
-    request(`/create/${table}`, { method: 'POST', body: { properties } }),
+    request(`/create/${table}`, {
+      method: 'POST',
+      body: { properties }
+    }),
 
   update: (table, id, properties) =>
     request(`/update/${table}/${encodeURIComponent(id)}`, {
@@ -71,11 +91,19 @@ export const API = {
     }),
 
   remove: (table, id) =>
-    request(`/delete/${table}/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+    request(`/delete/${table}/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }),
 
   upload: (table, formData) =>
-    request(`/upload/${table}`, { method: 'POST', body: formData }),
+    request(`/upload/${table}`, {
+      method: 'POST',
+      body: formData
+    }),
 
   fileUrl: (table, id) =>
-    `${CONFIG.proxyUrl}?path=${encodeURIComponent(`/file/${table}/${id}`)}`
+    `${CONFIG.proxyUrl}?path=${encodeURIComponent(
+      `/file/${table}/${id}`
+    )}`
 };
+
