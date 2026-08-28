@@ -1,5 +1,24 @@
-import {API} from './api.js';import {CONFIG} from './config.js';import {qs,notify,initShell,esc,getCaseId} from './common.js';initShell();
-const phaseSlugs=['','registro','sistema-sam','encuestas','portal-sam','integracion-propuesta','conformacion-expediente','revision-cg','cedula-notificacion'];
-async function list(filters=null){try{const r=filters?await API.search(CONFIG.tables.cases,{filters,operator:'AND',limit:300}):await API.list(CONFIG.tables.cases,{limit:300});const body=qs('#casesBody');if(!body)return;body.innerHTML=(r.data||[]).map(c=>`<tr><td>${esc(c.folio||c.id)}</td><td>${esc(c.clasificacion)}</td><td>${esc(c.distrito)}</td><td><span class="badge ${c.estatus==='CONCLUIDO'?'badge-ok':'badge-warn'}">${esc(c.estatus)}</span></td><td>Fase ${esc(c.fase_actual||1)}</td><td><a class="btn btn-outline" href="detalle.html?id=${c.id||c.id_caso}">Ver</a></td></tr>`).join('')||'<tr><td colspan="6">No se encontraron registros.</td></tr>'}catch(e){notify(e.message,'error')}}
-qs('#searchForm')?.addEventListener('submit',e=>{e.preventDefault();const q=qs('#q').value.trim();list(q?{folio:{like:q}}:null)});if(qs('#casesBody'))list();
-async function detail(){const id=getCaseId();if(!id)return;try{const c=await API.record(CONFIG.tables.cases,id);qs('#detail').innerHTML=`<div class="grid"><div class="col-6"><b>Folio</b><p>${esc(c.folio||id)}</p></div><div class="col-6"><b>Clasificación</b><p>${esc(c.clasificacion)}</p></div><div class="col-4"><b>Distrito</b><p>${esc(c.distrito)}</p></div><div class="col-4"><b>Fase actual</b><p>${esc(c.fase_actual)}</p></div><div class="col-4"><b>Estatus</b><p>${esc(c.estatus)}</p></div><div class="col-12"><b>Descripción</b><p>${esc(c.descripcion)}</p></div></div>`;const n=Number(c.fase_actual||1);qs('#continue').href=`../fases/fase${n}-${phaseSlugs[n]}.html?id=${id}`;localStorage.setItem('mgpc_current_case',id)}catch(e){notify(e.message,'error')}}if(qs('#detail'))detail();
+import {API} from './api.js'
+import {CONFIG} from './config.js'
+import {qs,notify,initShell,esc,getCaseId} from './common.js'
+initShell()
+
+const phaseSlugs=['','registro','sistema-sam','encuestas','portal-sam','integracion-propuesta','conformacion-expediente','revision-cg','cedula-notificacion']
+
+async function list(filters=null){try{const r=filters?await API.search(CONFIG.tables.cases,{filters,operator:'AND',limit:300}):await API.list(CONFIG.tables.cases,{limit:300})
+const body=qs('#casesBody')
+if(!body)return
+body.innerHTML=(r.data||[]).map(c=>`<tr><td>${esc(c.folio||c.id)}</td><td>${esc(c.clasificacion)}</td><td>${esc(c.distrito)}</td><td><span class="badge ${c.estatus==='CONCLUIDO'?'badge-ok':'badge-warn'}">${esc(c.estatus)}</span></td><td>Fase ${esc(c.fase_actual||1)}</td><td><a class="btn btn-outline" href="detalle.html?id=${c.id||c.id_caso}">Ver</a></td></tr>`).join('')||'<tr><td colspan="6">No se encontraron registros.</td></tr>'}catch(e){notify(e.message,'error')}}
+qs('#searchForm')?.addEventListener('submit',e=>{e.preventDefault()
+const q=qs('#q').value.trim()
+list(q?{folio:{like:q}}:null)})
+if(qs('#casesBody'))list()
+
+async function detail(){const id=getCaseId()
+if(!id)return
+try{const c=await API.record(CONFIG.tables.cases,id)
+qs('#detail').innerHTML=`<div class="grid"><div class="col-6"><b>Folio</b><p>${esc(c.folio||id)}</p></div><div class="col-6"><b>Clasificación</b><p>${esc(c.clasificacion)}</p></div><div class="col-4"><b>Distrito</b><p>${esc(c.distrito)}</p></div><div class="col-4"><b>Fase actual</b><p>${esc(c.fase_actual)}</p></div><div class="col-4"><b>Estatus</b><p>${esc(c.estatus)}</p></div><div class="col-12"><b>Descripción</b><p>${esc(c.descripcion)}</p></div></div>`
+const n=Number(c.fase_actual||1)
+qs('#continue').href=`../fases/fase${n}-${phaseSlugs[n]}.html?id=${id}`
+localStorage.setItem('mgpc_current_case',id)}catch(e){notify(e.message,'error')}}if(qs('#detail'))detail()
+
