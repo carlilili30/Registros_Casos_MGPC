@@ -14,9 +14,7 @@ return ''}
 function clearUT(){['claveUT','nombreUT','seccionesC','seccionesP','tipoUT'].forEach(x=>qs('#'+x).value='')}
 async function districts(){const s=getSession()
 dist.innerHTML='<option value="">Seleccione</option>'
-for(let n=1
-n<=33
-n++){const o=document.createElement('option')
+for(let n=1; n<=33; n++){const o=document.createElement('option')
 o.value=`Distrito ${n}`
 o.dataset.numero=n
 o.textContent=`Distrito ${n}`
