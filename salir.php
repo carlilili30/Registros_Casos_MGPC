@@ -1,1 +1,0 @@
-<?php require_once __DIR__.'/lib/inicio.php';bitacora('CIERRE_SESION');session_destroy();ir('index.php');
