@@ -426,9 +426,14 @@ tbody tr:hover {
 
 .login-wrap {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, var(--morado), var(--morado-secundario) 55%, var(--lila));
+  display: flex;
+  align-items: center;        /* Centrado vertical */
+  justify-content: flex-start; /* Lado izquierdo */
+
+  background-image: url("../../img/web_caren.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 .login-card {
@@ -438,7 +443,10 @@ tbody tr:hover {
   border-top: 7px solid var(--verde);
   border-radius: 18px;
   box-shadow: 0 25px 70px rgba(45, 38, 49, 0.32);
+
+  margin-left: 5vw;
 }
+
 
 .login-card h1 {
   margin-top: 0;
