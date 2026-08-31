@@ -49,43 +49,174 @@
 
     <form id="phaseForm" class="card">
       <h2 class="section-title">Datos generales</h2>
-      <div class="grid">
-        <div class="field col-4">
-          <label for="distrito" class="required">Distrito</label>
-          <input id="distrito" name="distrito" readonly required>
-          <small id="districtHelp" class="muted">Distrito asignado al usuario que inició sesión.</small>
-        </div>
+		<div class="grid">
+		  <!-- Distrito en una fila independiente -->
+		  <div class="field col-12">
+		    <label for="distrito" class="required">Distrito</label>
 
-        <div id="grupoNombreUT" class="field col-8 ut-search-container">
-          <label for="nombreUT" class="required">Nombre de Unidad Territorial</label>
-          <input id="nombreUT" name="nombreUT" type="text" placeholder="Escriba para buscar por nombre..." autocomplete="off" required>
-          <ul id="resultadosNombreUT" class="ut-resultados" role="listbox"></ul>
-        </div>
+		    <input
+		      id="distrito"
+		      name="distrito"
+		      type="text"
+		      readonly
+		      required
+		    >
 
-        <div id="grupoClaveUT" class="field col-4 ut-search-container">
-          <label for="claveUT" class="required">Clave de Unidad Territorial</label>
-          <input id="claveUT" name="claveUT" type="text" placeholder="Escriba para buscar por clave..." autocomplete="off" required>
-          <ul id="resultadosClaveUT" class="ut-resultados" role="listbox"></ul>
-        </div>
+		    <small id="districtHelp" class="muted">
+		      Distrito asignado al usuario que inició sesión.
+		    </small>
+		  </div>
 
-        <div class="field col-6">
-          <label for="seccionesC">Secciones completas</label>
-          <textarea id="seccionesC" name="seccionesC" readonly></textarea>
-        </div>
-        <div class="field col-6">
-          <label for="seccionesP">Secciones parciales</label>
-          <textarea id="seccionesP" name="seccionesP" readonly></textarea>
-        </div>
-      </div>
-      <input type="hidden" id="id_seccxut" name="id_seccxut">
+		  <!-- Clave UT -->
+		  <div
+		    id="grupoClaveUT"
+		    class="field col-6 ut-search-container"
+		  >
+		    <label for="claveUT" class="required">
+		      Clave de Unidad Territorial
+		    </label>
+
+		    <input
+		      id="claveUT"
+		      name="claveUT"
+		      type="text"
+		      placeholder="Escriba para buscar por clave..."
+		      autocomplete="off"
+		      required
+		    >
+
+		    <ul
+		      id="resultadosClaveUT"
+		      class="ut-resultados"
+		      role="listbox"
+		    ></ul>
+		  </div>
+
+		  <!-- Nombre UT -->
+		  <div
+		    id="grupoNombreUT"
+		    class="field col-6 ut-search-container"
+		  >
+		    <label for="nombreUT" class="required">
+		      Nombre de Unidad Territorial
+		    </label>
+
+		    <input
+		      id="nombreUT"
+		      name="nombreUT"
+		      type="text"
+		      placeholder="Escriba para buscar por nombre..."
+		      autocomplete="off"
+		      required
+		    >
+
+		    <ul
+		      id="resultadosNombreUT"
+		      class="ut-resultados"
+		      role="listbox"
+		    ></ul>
+		  </div>
+
+		  <!-- Secciones debajo de Clave y Nombre -->
+		  <div class="field col-6">
+		    <label for="seccionesC">
+		      Secciones completas
+		    </label>
+
+		    <textarea
+		      id="seccionesC"
+		      name="seccionesC"
+		      readonly
+		    ></textarea>
+		  </div>
+
+		  <div class="field col-6">
+		    <label for="seccionesP">
+		      Secciones parciales
+		    </label>
+
+		    <textarea
+		      id="seccionesP"
+		      name="seccionesP"
+		      readonly
+		    ></textarea>
+		  </div>
+
+		</div>
+
+		<input
+		  type="hidden"
+		  id="id_seccxut"
+		  name="id_seccxut"
+		>
 
       <h2 class="section-title">Datos de contacto</h2>
-      <div class="grid">
-        <div class="field col-6"><label for="nombre_solicitante" class="required">Nombre del solicitante</label><input id="nombre_solicitante" required></div>
-        <div class="field col-3"><label for="telefono">Teléfono</label><input id="telefono" inputmode="tel"></div>
-        <div class="field col-3"><label for="correo">Correo</label><input id="correo" type="email"></div>
-        <div class="field col-12"><label for="domicilio">Domicilio</label><textarea id="domicilio"></textarea></div>
-      </div>
+
+<div class="grid">
+
+  <div class="field col-6">
+    <label
+      for="nombre_solicitante"
+      class="required"
+    >
+      Nombre del solicitante
+    </label>
+
+    <input
+      id="nombre_solicitante"
+      name="nombre_solicitante"
+      type="text"
+      maxlength="200"
+      autocomplete="name"
+      required
+    >
+  </div>
+
+  <div class="field col-3">
+    <label for="telefono">
+      Teléfono
+    </label>
+
+    <input
+      id="telefono"
+      name="telefono"
+      type="tel"
+      inputmode="tel"
+      maxlength="20"
+      autocomplete="tel"
+      placeholder="Ej. 5512345678"
+    >
+  </div>
+
+  <div class="field col-3">
+    <label for="correo">
+      Correo
+    </label>
+
+    <input
+      id="correo"
+      name="correo"
+      type="email"
+      maxlength="200"
+      autocomplete="email"
+      placeholder="correo@ejemplo.com"
+    >
+  </div>
+
+  <div class="field col-12">
+    <label for="domicilio">
+      Domicilio
+    </label>
+
+    <textarea
+      id="domicilio"
+      name="domicilio"
+      maxlength="10000"
+      rows="3"
+    ></textarea>
+  </div>
+
+</div>
 
       <h2 class="section-title">Caso</h2>
       <div class="grid">

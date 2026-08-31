@@ -1,269 +1,309 @@
 import {API} from './api.js';
 import {CONFIG} from './config.js';
-import {qs, qsa, notify, initShell, getSession, localDateTime} from './common.js';
+import {qs,qsa,notify,initShell,getSession,localDateTime} from './common.js';
 
 initShell();
+const form=qs('#phaseForm'),dist=qs('#distrito'),nombre=qs('#nombreUT'),clave=qs('#claveUT'),idUT=qs('#id_seccxut');
+const listaNombre=qs('#resultadosNombreUT'),listaClave=qs('#resultadosClaveUT'),otherBox=qs('#otrasUtSection'),other=qsa('.otra-ut');
+let timer,seleccionada=null,units=[];
+const fields='id_seccxut,claveUT,nombreUT,seccionesC,seccionesP';
+const v=(o,...ks)=>{for(const k of ks)if(o?.[k]!=null)return o[k];return ''};
 
-const form = qs('#phaseForm');
-const distritoInput = qs('#distrito');
-const nombreInput = qs('#nombreUT');
-const claveInput = qs('#claveUT');
-const idInput = qs('#id_seccxut');
-const resultadosNombre = qs('#resultadosNombreUT');
-const resultadosClave = qs('#resultadosClaveUT');
-const otrasBox = qs('#otrasUtSection');
-const otrasSelect = qsa('.otra-ut');
+function numeroDistrito(){const s=getSession()||{};const raw=v(s,'distrito','claveDT','numeroDistrito','id_distrito');const m=String(raw).match(/\d+/);return m?Number(m[0]):0}
+function fijarDistrito(){const n=numeroDistrito();dist.value=n?`Distrito ${n}`:'';if(!n)notify('La sesión mgpc_session no contiene un distrito válido.','error')}
+function cerrar(){listaNombre.innerHTML='';listaClave.innerHTML=''}
+function limpiarSeleccion(){seleccionada=null;idUT.value='';qs('#seccionesC').value='';qs('#seccionesP').value=''}
+function seleccionar(row){seleccionada=row;idUT.value=v(row,'id_seccxut','id');clave.value=v(row,'claveUT');nombre.value=v(row,'nombreUT');qs('#seccionesC').value=v(row,'seccionesC');qs('#seccionesP').value=v(row,'seccionesP');cerrar();fillOthers()}
 
-let debounceTimer;
-let utSeleccionada = null;
-let unidadesDistrito = [];
+async function suggest(campo,texto,lista){
+ lista.innerHTML='<li>Buscando...</li>';
+ try{
+  const params=new URLSearchParams({campo,q:texto,fields,limit:'10'});
+  const path=`/suggest/${CONFIG.tables.territorial}?${params.toString()}`;
+  const res=await fetch(`${CONFIG.proxyUrl}?path=${encodeURIComponent(path)}`);
+  const json=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(json.error||json.message||`Error API ${res.status}`);
+  lista.innerHTML='';const rows=Array.isArray(json.data)?json.data:[];
+  if(!rows.length){lista.innerHTML='<li>Sin resultados</li>';return}
+  rows.forEach(row=>{const li=document.createElement('li');li.className='ut-opcion';li.tabIndex=0;
+   const a=document.createElement('span');a.className='ut-opcion-clave';a.textContent=v(row,'claveUT')||'Sin clave';
+   const b=document.createElement('span');b.className='ut-opcion-nombre';b.textContent=v(row,'nombreUT')||'Sin nombre';li.append(a,b);
+   li.onclick=()=>seleccionar(row);li.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();seleccionar(row)}};lista.appendChild(li)});
+ }catch(e){lista.innerHTML='';const li=document.createElement('li');li.textContent=`Error: ${e.message}`;lista.appendChild(li)}
+}
+function activar(input,campo,lista,otra){input.addEventListener('input',()=>{clearTimeout(timer);limpiarSeleccion();otra.innerHTML='';const t=input.value.trim();if(t.length<2){lista.innerHTML='';return}timer=setTimeout(()=>suggest(campo,t,lista),300)})}
+activar(nombre,'nombreUT',listaNombre,listaClave);activar(clave,'claveUT',listaClave,listaNombre);
+document.addEventListener('click',e=>{if(!e.target.closest('.ut-search-container'))cerrar()});
 
-const CAMPOS_UT = 'id_seccxut,claveUT,nombreUT,seccionesC,seccionesP';
+async function loadOthers(){const n=numeroDistrito();if(!n)return;try{const r=await API.search(CONFIG.tables.territorial,{filters:{claveDT:n},operator:'AND',limit:5000});units=r.data||[];fillOthers()}catch(e){console.error(e)}}
+function fillOthers(){const main=String(idUT.value||''),chosen=other.map(x=>x.value).filter(Boolean);other.forEach(sel=>{const keep=sel.value;sel.innerHTML='<option value="">Seleccione una UT</option>';units.filter(x=>String(v(x,'id_seccxut','id'))!==main).forEach(x=>{const id=String(v(x,'id_seccxut','id')),o=document.createElement('option');o.value=id;o.textContent=`${v(x,'claveUT')} · ${v(x,'nombreUT')}`;o.disabled=chosen.includes(id)&&id!==keep;sel.appendChild(o)});sel.value=keep})}
+function toggle(){const yes=qs('#involucra_otra_ut').value==='Sí';otherBox.classList.toggle('hidden',!yes);other.forEach(x=>{x.disabled=!yes;if(!yes)x.value='' });if(yes)fillOthers()}
+function folio(n,id){return `D${String(n).padStart(2,'0')}-${new Date().getFullYear()}-${String(id).padStart(6,'0')}`}
+qs('#involucra_otra_ut').addEventListener('change',toggle);other.forEach(x=>x.addEventListener('change',fillOthers));
 
-function valor(objeto, ...claves) {
-  for (const clave of claves) {
-    if (objeto && objeto[clave] !== undefined && objeto[clave] !== null && objeto[clave] !== '') return objeto[clave];
-  }
-  return '';
+function obtenerDatosContacto() {
+  return {
+    nombre_solicitante:
+      qs('#nombre_solicitante').value.trim(),
+
+    telefono:
+      qs('#telefono').value.trim(),
+
+    correo:
+      qs('#correo').value.trim(),
+
+    domicilio:
+      qs('#domicilio').value.trim()
+  };
 }
 
-function parsearJSON(texto) {
-  try { return JSON.parse(texto); } catch (_error) { return null; }
-}
-
-function buscarDistritoEnObjeto(objeto, profundidad = 0) {
-  if (!objeto || typeof objeto !== 'object' || profundidad > 5) return 0;
-  const claves = ['distrito', 'numeroDistrito', 'numero_distrito', 'idDistrito', 'id_distrito', 'claveDT', 'clave_dt', 'district'];
-  for (const clave of claves) {
-    if (objeto[clave] !== undefined && objeto[clave] !== null) {
-      const coincidencia = String(objeto[clave]).match(/\d+/);
-      const numero = coincidencia ? Number(coincidencia[0]) : 0;
-      if (numero >= 1 && numero <= 33) return numero;
-    }
-  }
-  for (const contenido of Object.values(objeto)) {
-    if (contenido && typeof contenido === 'object') {
-      const numero = buscarDistritoEnObjeto(contenido, profundidad + 1);
-      if (numero) return numero;
-    }
-  }
-  return 0;
-}
-
-function obtenerDistritoSesion() {
-  const sesionComun = (() => { try { return getSession(); } catch (_error) { return null; } })();
-  let numero = buscarDistritoEnObjeto(sesionComun);
-  if (numero) return numero;
-
-  const clavesPreferidas = ['usuario', 'sesion', 'session', 'mgpc_session', 'mgpc_user', 'user', 'auth'];
-  for (const clave of clavesPreferidas) {
-    const crudo = sessionStorage.getItem(clave);
-    if (!crudo) continue;
-    numero = buscarDistritoEnObjeto(parsearJSON(crudo));
-    if (!numero) {
-      const coincidencia = String(crudo).match(/(?:distrito|claveDT)[^0-9]{0,12}(\d{1,2})/i);
-      numero = coincidencia ? Number(coincidencia[1]) : 0;
-    }
-    if (numero >= 1 && numero <= 33) return numero;
+function validarDatosContacto(datos) {
+  if (!datos.nombre_solicitante) {
+    throw new Error(
+      'Escriba el nombre del solicitante.'
+    );
   }
 
-  for (let i = 0; i < sessionStorage.length; i++) {
-    const clave = sessionStorage.key(i);
-    const crudo = sessionStorage.getItem(clave);
-    numero = buscarDistritoEnObjeto(parsearJSON(crudo));
-    if (!numero && /distrito|district|claveDT/i.test(clave || '')) {
-      const coincidencia = String(crudo).match(/\d+/);
-      numero = coincidencia ? Number(coincidencia[0]) : 0;
-    }
-    if (numero >= 1 && numero <= 33) return numero;
+  if (
+    datos.correo &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.correo)
+  ) {
+    throw new Error(
+      'Escriba un correo electrónico válido.'
+    );
   }
-  return 0;
-}
 
-function establecerDistrito() {
-  const numero = obtenerDistritoSesion();
-  distritoInput.value = numero ? `Distrito ${numero}` : '';
-  if (!numero) notify('No se encontró el distrito en sessionStorage. Revise la variable guardada al iniciar sesión.', 'error');
-  return numero;
-}
-
-function baseUrl() {
-  const url = CONFIG.baseUrl || CONFIG.apiUrl || CONFIG.apiURL || CONFIG.API_URL || CONFIG.api?.baseUrl || CONFIG.api?.url;
-  if (!url) throw new Error('No se encontró la URL de la API en config.js.');
-  return String(url).replace(/\/$/, '');
-}
-
-function apiKey() {
-  return CONFIG.apiKey || CONFIG.API_KEY || CONFIG.api_key || CONFIG.api?.key || '';
-}
-
-function limpiarSeleccion(campoEditado) {
-  if (!utSeleccionada) return;
-  const valorEsperado = campoEditado === 'nombreUT' ? valor(utSeleccionada, 'nombreUT') : valor(utSeleccionada, 'claveUT');
-  const valorActual = campoEditado === 'nombreUT' ? nombreInput.value : claveInput.value;
-  if (valorActual !== String(valorEsperado)) {
-    utSeleccionada = null;
-    idInput.value = '';
-    qs('#seccionesC').value = '';
-    qs('#seccionesP').value = '';
+  if (
+    datos.telefono &&
+    !/^[0-9+\s()\-]{7,20}$/.test(datos.telefono)
+  ) {
+    throw new Error(
+      'El teléfono contiene caracteres no válidos.'
+    );
   }
 }
+``
+form.addEventListener('submit', async event => {
+  event.preventDefault();
 
-function cerrarResultados() {
-  resultadosNombre.innerHTML = '';
-  resultadosClave.innerHTML = '';
-}
-
-function seleccionarUT(fila) {
-  utSeleccionada = fila;
-  idInput.value = valor(fila, 'id_seccxut', 'id');
-  claveInput.value = valor(fila, 'claveUT');
-  nombreInput.value = valor(fila, 'nombreUT');
-  qs('#seccionesC').value = valor(fila, 'seccionesC');
-  qs('#seccionesP').value = valor(fila, 'seccionesP');
-  cerrarResultados();
-  llenarOtrasUT();
-}
-
-async function buscarUT(campo, texto, lista) {
-  lista.innerHTML = '<li>Buscando...</li>';
-  try {
-    const parametros = new URLSearchParams({campo, q: texto, fields: CAMPOS_UT, limit: '10'});
-    if (apiKey()) parametros.set('api_key', apiKey());
-    const respuesta = await fetch(`${baseUrl()}/suggest/seccxut?${parametros.toString()}`);
-    const json = await respuesta.json().catch(() => ({}));
-    if (!respuesta.ok) throw new Error(json.error || `Error HTTP ${respuesta.status}`);
-    const filas = Array.isArray(json.data) ? json.data : [];
-    lista.innerHTML = '';
-    if (!filas.length) { lista.innerHTML = '<li>Sin resultados</li>'; return; }
-    filas.forEach(fila => {
-      const li = document.createElement('li');
-      li.className = 'ut-opcion';
-      li.tabIndex = 0;
-      const clave = document.createElement('span');
-      clave.className = 'ut-opcion-clave';
-      clave.textContent = valor(fila, 'claveUT') || 'Sin clave';
-      const nombre = document.createElement('span');
-      nombre.className = 'ut-opcion-nombre';
-      nombre.textContent = valor(fila, 'nombreUT') || 'Sin nombre';
-      li.append(clave, nombre);
-      li.addEventListener('click', () => seleccionarUT(fila));
-      li.addEventListener('keydown', evento => {
-        if (evento.key === 'Enter' || evento.key === ' ') { evento.preventDefault(); seleccionarUT(fila); }
-      });
-      lista.appendChild(li);
-    });
-  } catch (error) {
-    lista.innerHTML = '';
-    const li = document.createElement('li');
-    li.textContent = `Error: ${error.message}`;
-    lista.appendChild(li);
+  if (!form.reportValidity()) {
+    return;
   }
-}
 
-function prepararBusqueda(input, campo, lista, grupo) {
-  input.addEventListener('focus', () => {
-    qs('#grupoNombreUT').classList.remove('campo-busqueda-activo');
-    qs('#grupoClaveUT').classList.remove('campo-busqueda-activo');
-    grupo.classList.add('campo-busqueda-activo');
-  });
-  input.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    limpiarSeleccion(campo);
-    const texto = input.value.trim();
-    const otraLista = lista === resultadosNombre ? resultadosClave : resultadosNombre;
-    otraLista.innerHTML = '';
-    if (texto.length < 2) { lista.innerHTML = ''; return; }
-    debounceTimer = setTimeout(() => buscarUT(campo, texto, lista), 300);
-  });
-}
-
-async function cargarUTDistrito() {
-  const numero = obtenerDistritoSesion();
-  if (!numero) return;
-  try {
-    const respuesta = await API.search(CONFIG.tables.territorial, {filters: {claveDT: numero}, operator: 'AND', limit: 5000});
-    unidadesDistrito = Array.isArray(respuesta.data) ? respuesta.data : [];
-    llenarOtrasUT();
-  } catch (error) { console.error('No se cargaron las UT adicionales:', error); }
-}
-
-function llenarOtrasUT() {
-  const principal = String(idInput.value || '');
-  const elegidas = otrasSelect.map(select => select.value).filter(Boolean);
-  otrasSelect.forEach(select => {
-    const conservar = select.value;
-    select.innerHTML = '<option value="">Seleccione una UT</option>';
-    unidadesDistrito.filter(fila => String(valor(fila, 'id_seccxut', 'id')) !== principal).forEach(fila => {
-      const id = String(valor(fila, 'id_seccxut', 'id'));
-      const opcion = document.createElement('option');
-      opcion.value = id;
-      opcion.textContent = `${valor(fila, 'claveUT')} · ${valor(fila, 'nombreUT')}`;
-      opcion.disabled = elegidas.includes(id) && id !== conservar;
-      select.appendChild(opcion);
-    });
-    select.value = conservar;
-  });
-}
-
-function alternarOtrasUT() {
-  const mostrar = qs('#involucra_otra_ut').value === 'Sí';
-  otrasBox.classList.toggle('hidden', !mostrar);
-  otrasSelect.forEach(select => { select.disabled = !mostrar; if (!mostrar) select.value = ''; });
-  if (mostrar) llenarOtrasUT();
-}
-
-function crearFolio(numero, id) {
-  return `D${String(numero).padStart(2,'0')}-${new Date().getFullYear()}-${String(id).padStart(6,'0')}`;
-}
-
-prepararBusqueda(nombreInput, 'nombreUT', resultadosNombre, qs('#grupoNombreUT'));
-prepararBusqueda(claveInput, 'claveUT', resultadosClave, qs('#grupoClaveUT'));
-document.addEventListener('click', evento => { if (!evento.target.closest('.ut-search-container')) cerrarResultados(); });
-qs('#involucra_otra_ut').addEventListener('change', alternarOtrasUT);
-otrasSelect.forEach(select => select.addEventListener('change', llenarOtrasUT));
-
-form.addEventListener('submit', async evento => {
-  evento.preventDefault();
-  if (!form.reportValidity()) return;
   const boton = qs('#submitButton');
   boton.disabled = true;
-  try {
-    const numeroDistrito = obtenerDistritoSesion();
-    if (!numeroDistrito) throw new Error('No se encontró un distrito válido en sessionStorage.');
-    if (!utSeleccionada || !idInput.value) throw new Error('Seleccione una Unidad Territorial de la lista de resultados.');
-    const extra = {
-      id_seccxut: Number(idInput.value), claveUT: claveInput.value, nombreUT: nombreInput.value,
-      seccionesC: qs('#seccionesC').value, seccionesP: qs('#seccionesP').value,
-      domicilio: qs('#domicilio').value.trim(), otras_ut: otrasSelect.map(x => x.value).filter(Boolean)
-    };
-    const datosCaso = {
-      folio: null, distrito: distritoInput.value,
-      unidad_territorial: `${claveInput.value} · ${nombreInput.value}`,
-      nombre_solicitante: qs('#nombre_solicitante').value.trim(), telefono: qs('#telefono').value.trim(),
-      correo: qs('#correo').value.trim(), tipo_caso: qs('#tipo_caso').value,
-      clasificacion: qs('#clasificacion').value, involucra_otra_ut: qs('#involucra_otra_ut').value,
-      descripcion: qs('#descripcion').value.trim(), medio_solicitud: qs('#medio_solicitud').value,
-      fase_actual: 1, estatus: 'REGISTRADO', fecha_registro: localDateTime()
-    };
-    const creado = await API.create(CONFIG.tables.cases, datosCaso);
-    const id = creado.id;
-    if (!id) throw new Error('La API no devolvió el identificador del caso.');
-    await API.update(CONFIG.tables.cases, id, {folio: crearFolio(numeroDistrito, id), fase_actual: 2});
-    await API.create(CONFIG.tables.phases, {id_caso: Number(id), fase: 1, estatus: 'CONCLUIDA', observaciones: 'Registro inicial', datos_json: JSON.stringify(extra), fecha_fin: localDateTime()});
-    const archivos = Array.from(qs('#archivos').files || []);
-    if (archivos.length) {
-      const fd = new FormData();
-      archivos.forEach(archivo => fd.append('files[]', archivo));
-      fd.append('descripcion', `Caso ${id}, fase 1`);
-      const carga = await API.upload(CONFIG.tables.files, fd);
-      for (const archivo of carga.subidos || []) await API.create(CONFIG.tables.caseFiles, {id_caso: Number(id), id_archivo: Number(archivo.id), fase: 1, nombre_original: archivo.nombre_original});
-    }
-    localStorage.setItem('mgpc_current_case', id);
-    location.href = `fase2-sistema-sam.html?id=${id}`;
-  } catch (error) { notify(error.message, 'error'); boton.disabled = false; }
-});
+  boton.textContent = 'Guardando...';
 
-establecerDistrito();
-alternarOtrasUT();
-cargarUTDistrito();
+  try {
+    const n = numeroDistrito();
+
+    if (!n) {
+      throw new Error(
+        'El distrito de la sesión no es válido.'
+      );
+    }
+
+    if (!seleccionada || !idUT.value) {
+      throw new Error(
+        'Seleccione una Unidad Territorial de la lista.'
+      );
+    }
+
+    const contacto = obtenerDatosContacto();
+
+    validarDatosContacto(contacto);
+
+    const extra = {
+      id_seccxut: Number(idUT.value),
+
+      claveUT:
+        clave.value.trim(),
+
+      nombreUT:
+        nombre.value.trim(),
+
+      seccionesC:
+        qs('#seccionesC').value.trim(),
+
+      seccionesP:
+        qs('#seccionesP').value.trim(),
+
+      domicilio:
+        contacto.domicilio,
+
+      otras_ut:
+        other
+          .map(select => select.value)
+          .filter(Boolean)
+    };
+
+    /*
+     * Datos que se enviarán mediante POST.
+     *
+     * API.create() llama a:
+     * POST /create/casos
+     *
+     * api.js transforma este objeto en:
+     * {
+     *   properties: datosCaso
+     * }
+     */
+    const datosCaso = {
+      folio: null,
+
+      distrito:
+        dist.value,
+
+      unidad_territorial:
+        `${clave.value.trim()} · ${nombre.value.trim()}`,
+
+      nombre_solicitante:
+        contacto.nombre_solicitante,
+
+      telefono:
+        contacto.telefono,
+
+      correo:
+        contacto.correo,
+
+      domicilio:
+        contacto.domicilio,
+
+      tipo_caso:
+        qs('#tipo_caso').value,
+
+      clasificacion:
+        qs('#clasificacion').value,
+
+      involucra_otra_ut:
+        qs('#involucra_otra_ut').value,
+
+      descripcion:
+        qs('#descripcion').value.trim(),
+
+      medio_solicitud:
+        qs('#medio_solicitud').value,
+
+      fase_actual: 1,
+
+      estatus: 'REGISTRADO',
+
+      fecha_registro:
+        localDateTime()
+    };
+
+    /*
+     * Este método realiza el POST.
+     */
+    const respuestaCreacion = await API.create(
+      CONFIG.tables.cases,
+      datosCaso
+    );
+
+    const idCaso = respuestaCreacion.id;
+
+    if (!idCaso) {
+      throw new Error(
+        'La API no devolvió el identificador del caso.'
+      );
+    }
+
+    /*
+     * Después de crear el caso, se genera el folio
+     * y se actualiza mediante PUT.
+     */
+    await API.update(
+      CONFIG.tables.cases,
+      idCaso,
+      {
+        folio: folio(n, idCaso),
+        fase_actual: 2
+      }
+    );
+
+    /*
+     * Guarda los datos adicionales de la fase 1.
+     */
+    await API.create(
+      CONFIG.tables.phases,
+      {
+        id_caso: Number(idCaso),
+        fase: 1,
+        estatus: 'CONCLUIDA',
+        observaciones: 'Registro inicial',
+        datos_json: JSON.stringify(extra),
+        fecha_fin: localDateTime()
+      }
+    );
+
+    /*
+     * Carga de documentos.
+     */
+    const archivos = Array.from(
+      qs('#archivos').files || []
+    );
+
+    if (archivos.length) {
+      const formData = new FormData();
+
+      archivos.forEach(archivo => {
+        formData.append(
+          'files[]',
+          archivo
+        );
+      });
+
+      formData.append(
+        'descripcion',
+        `Caso ${idCaso}, fase 1`
+      );
+
+      const respuestaCarga = await API.upload(
+        CONFIG.tables.files,
+        formData
+      );
+
+      for (
+        const archivo of respuestaCarga.subidos || []
+      ) {
+        await API.create(
+          CONFIG.tables.caseFiles,
+          {
+            id_caso: Number(idCaso),
+            id_archivo: Number(archivo.id),
+            fase: 1,
+            nombre_original:
+              archivo.nombre_original
+          }
+        );
+      }
+    }
+
+    localStorage.setItem(
+      'mgpc_current_case',
+      idCaso
+    );
+
+    location.href =
+      `fase2-sistema-sam.html?id=${idCaso}`;
+
+  } catch (error) {
+    console.error(
+      'Error al registrar el caso:',
+      error
+    );
+
+    notify(
+      error.message ||
+      'No fue posible guardar el registro.',
+      'error'
+    );
+
+    boton.disabled = false;
+    boton.textContent = 'Guardar y siguiente';
+  }
+});
+``
+
+
+fijarDistrito();toggle();loadOthers();
