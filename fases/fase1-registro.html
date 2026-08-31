@@ -1,135 +1,125 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Registro</title>
-<link rel="stylesheet" href="../assets/css/styles.css"></head>
-<body data-phase="1"><div id="appHeader"></div>
-<main class="container"><div id="message" class="alert hidden"></div>
-<div class="page-title"><div><h1>Fase 1. Registro</h1>
-<p class="muted">Complete la información y use Siguiente para continuar.</p>
-</div>
-</div>
-<div class="card"><div id="caseInfo" class="muted">Seguimiento del caso: Nuevo registro</div><br>
-<div class="timeline"><div class="step active">1. Registro</div>
-<div class="step">2. Estratos de Encuestas</div>
-<div class="step">3. Encuestas</div>
-<div class="step">4. Portal Revisión y Mapeo de Unidades Territoriales</div>
-<div class="step">5. Integración</div>
-<div class="step">6. Expediente</div>
-<div class="step">7. Revisión CG</div>
-<div class="step">8. Cédula</div>
-</div>
-</div>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Registro</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <style>
+    .ut-search-container { position: relative; }
+    .ut-resultados {
+      position: absolute; z-index: 1000; left: 0; right: 0; top: 100%;
+      list-style: none; margin: 4px 0 0; padding: 0; max-height: 280px;
+      overflow-y: auto; background: #fff; border: 1px solid #cbd2dc;
+      border-radius: 7px; box-shadow: 0 8px 20px rgba(0,0,0,.13);
+    }
+    .ut-resultados:empty { display: none; }
+    .ut-resultados li { padding: 11px 14px; border-bottom: 1px solid #e7eaf0; }
+    .ut-resultados li:last-child { border-bottom: 0; }
+    .ut-resultados .ut-opcion { cursor: pointer; }
+    .ut-resultados .ut-opcion:hover,
+    .ut-resultados .ut-opcion:focus { background: #f4edf1; outline: none; }
+    .ut-opcion-clave { display: block; font-weight: 700; }
+    .ut-opcion-nombre { display: block; margin-top: 2px; }
+    .campo-busqueda-activo input { border-color: #3b226b; box-shadow: 0 0 0 2px rgba(59,34,107,.12); }
+  </style>
+</head>
+<body data-phase="1">
+  <div id="appHeader"></div>
+  <main class="container">
+    <div id="message" class="alert hidden"></div>
+    <div class="page-title"><div>
+      <h1>Fase 1. Registro</h1>
+      <p class="muted">Complete la información y use Siguiente para continuar.</p>
+    </div></div>
 
-<form id="phaseForm" class="card"><h2 class="section-title">Datos generales</h2>
-<div class="grid"><div class="field col-4"><label>Folio</label>
-<input value="Se genera automáticamente" readonly></div>
-<div class="field col-4"><label class="required">Distrito</label>
-<input id="distrito" required disabled></input>
-</div>
-</select>
-</div>
-<div class="field col-4"><label>Clave de Unidad Territorial</label>
-<input id="claveUT" readonly></div>
-<div class="field col-8"><label>Nombre de Unidad Territorial</label>
-<input id="nombreUT" readonly></div>
-<div class="field col-4"><label>Tipo de UT</label>
-<input id="tipoUT" readonly></div>
-<div class="field col-4"><label>Secciones completas</label>
-<textarea id="seccionesC" readonly></textarea>
-</div>
-<div class="field col-4"><label>Secciones parciales</label>
-<textarea id="seccionesP" readonly></textarea>
-</div>
-</div>
+    <div class="card">
+      <div id="caseInfo" class="muted">Seguimiento del caso: Nuevo registro</div><br>
+      <div class="timeline">
+        <div class="step active">1. Registro</div>
+        <div class="step">2. Estratos de Encuestas</div>
+        <div class="step">3. Encuestas</div>
+        <div class="step">4. Portal Revisión y Mapeo de Unidades Territoriales</div>
+        <div class="step">5. Integración</div>
+        <div class="step">6. Expediente</div>
+        <div class="step">7. Revisión CG</div>
+        <div class="step">8. Cédula</div>
+      </div>
+    </div>
 
-<h2 class="section-title">Datos de contacto</h2>
-<div class="grid"><div class="field col-6"><label class="required">Nombre del solicitante</label>
-<input id="nombre_solicitante" required></div>
-<div class="field col-3"><label>Teléfono</label>
-<input id="telefono" inputmode="tel"></div>
-<div class="field col-3"><label>Correo</label>
-<input id="correo" type="email"></div>
-<div class="field col-12"><label>Domicilio</label>
-<textarea id="domicilio"></textarea>
-</div>
-</div>
+    <form id="phaseForm" class="card">
+      <h2 class="section-title">Datos generales</h2>
+      <div class="grid">
+        <div class="field col-4">
+          <label for="distrito" class="required">Distrito</label>
+          <input id="distrito" name="distrito" readonly required>
+          <small id="districtHelp" class="muted">Distrito asignado al usuario que inició sesión.</small>
+        </div>
 
-<h2 class="section-title">Caso</h2>
-<div class="grid"><div class="field col-4"><label class="required">Tipo de caso</label>
-<select id="tipo_caso" required><option value="">Seleccione</option>
-<option>Solicitud</option>
-<option>Actualización</option>
-<option>Consulta</option>
-</select>
-</div>
-<div class="field col-4"><label class="required">Clasificación</label>
-<select id="clasificacion" required><option value="">Seleccione</option>
-<option>CAMBIO DE NOMENCLATURA</option>
-<option>MODIFICACIÓN DE LÍMITES</option>
-<option>ALTA DE UNIDAD TERRITORIAL</option>
-<option>OTRO</option>
-</select>
-</div>
-<div class="field col-4"><label>¿Involucra otra UT?</label>
-<select id="involucra_otra_ut"><option>No</option>
-<option>Sí</option>
-</select>
-</div>
-<div class="field col-12"><label class="required">Descripción</label>
-<textarea id="descripcion" required></textarea>
-</div>
-</div>
+        <div id="grupoNombreUT" class="field col-8 ut-search-container">
+          <label for="nombreUT" class="required">Nombre de Unidad Territorial</label>
+          <input id="nombreUT" name="nombreUT" type="text" placeholder="Escriba para buscar por nombre..." autocomplete="off" required>
+          <ul id="resultadosNombreUT" class="ut-resultados" role="listbox"></ul>
+        </div>
 
-<section id="otrasUtSection" class="hidden"><h2 class="section-title">Unidades Territoriales adicionales</h2>
-<div class="grid"><div class="field col-6"><label for="otra_ut_1">Unidad Territorial adicional 1</label>
-<select id="otra_ut_1" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-<div class="field col-6"><label for="otra_ut_2">Unidad Territorial adicional 2</label>
-<select id="otra_ut_2" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-<div class="field col-6"><label for="otra_ut_3">Unidad Territorial adicional 3</label>
-<select id="otra_ut_3" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-<div class="field col-6"><label for="otra_ut_4">Unidad Territorial adicional 4</label>
-<select id="otra_ut_4" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-<div class="field col-6"><label for="otra_ut_5">Unidad Territorial adicional 5</label>
-<select id="otra_ut_5" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-<div class="field col-6"><label for="otra_ut_6">Unidad Territorial adicional 6</label>
-<select id="otra_ut_6" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-<div class="field col-6"><label for="otra_ut_7">Unidad Territorial adicional 7</label>
-<select id="otra_ut_7" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-<div class="field col-6"><label for="otra_ut_8">Unidad Territorial adicional 8</label>
-<select id="otra_ut_8" class="otra-ut" disabled><option value="">Seleccione una UT</option>
-</select>
-</div>
-</div>
-</section>
+        <div id="grupoClaveUT" class="field col-4 ut-search-container">
+          <label for="claveUT" class="required">Clave de Unidad Territorial</label>
+          <input id="claveUT" name="claveUT" type="text" placeholder="Escriba para buscar por clave..." autocomplete="off" required>
+          <ul id="resultadosClaveUT" class="ut-resultados" role="listbox"></ul>
+        </div>
 
-<h2 class="section-title">Solicitud y documentos</h2>
-<div class="grid"><div class="field col-6"><label>Medio de solicitud</label>
-<select id="medio_solicitud"><option>Escrito</option>
-<option>Oficio</option>
-<option>Otro</option>
-</select>
-</div>
-<div class="field col-6"><label>PDF o imágenes</label>
-<input id="archivos" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"></div>
-</div>
-<div class="actions"><a class="btn btn-secondary" href="../casos/consulta.html">Guardar y salir</a>
-<button id="submitButton" class="btn btn-primary" type="submit">Guardar y siguiente</button>
-</div>
-</form>
-</main>
-<script type="module" src="../assets/js/fase1.js"></script>
+        <div class="field col-6">
+          <label for="seccionesC">Secciones completas</label>
+          <textarea id="seccionesC" name="seccionesC" readonly></textarea>
+        </div>
+        <div class="field col-6">
+          <label for="seccionesP">Secciones parciales</label>
+          <textarea id="seccionesP" name="seccionesP" readonly></textarea>
+        </div>
+      </div>
+      <input type="hidden" id="id_seccxut" name="id_seccxut">
+
+      <h2 class="section-title">Datos de contacto</h2>
+      <div class="grid">
+        <div class="field col-6"><label for="nombre_solicitante" class="required">Nombre del solicitante</label><input id="nombre_solicitante" required></div>
+        <div class="field col-3"><label for="telefono">Teléfono</label><input id="telefono" inputmode="tel"></div>
+        <div class="field col-3"><label for="correo">Correo</label><input id="correo" type="email"></div>
+        <div class="field col-12"><label for="domicilio">Domicilio</label><textarea id="domicilio"></textarea></div>
+      </div>
+
+      <h2 class="section-title">Caso</h2>
+      <div class="grid">
+        <div class="field col-4"><label for="tipo_caso" class="required">Tipo de caso</label><select id="tipo_caso" required><option value="">Seleccione</option><option>Solicitud</option><option>Actualización</option><option>Consulta</option></select></div>
+        <div class="field col-4"><label for="clasificacion" class="required">Clasificación</label><select id="clasificacion" required><option value="">Seleccione</option><option>CAMBIO DE NOMENCLATURA</option><option>MODIFICACIÓN DE LÍMITES</option><option>ALTA DE UNIDAD TERRITORIAL</option><option>OTRO</option></select></div>
+        <div class="field col-4"><label for="involucra_otra_ut">¿Involucra otra UT?</label><select id="involucra_otra_ut"><option>No</option><option>Sí</option></select></div>
+        <div class="field col-12"><label for="descripcion" class="required">Descripción</label><textarea id="descripcion" required></textarea></div>
+      </div>
+
+      <section id="otrasUtSection" class="hidden">
+        <h2 class="section-title">Unidades Territoriales adicionales</h2>
+        <div class="grid">
+          <div class="field col-6"><label for="otra_ut_1">Unidad Territorial adicional 1</label><select id="otra_ut_1" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+          <div class="field col-6"><label for="otra_ut_2">Unidad Territorial adicional 2</label><select id="otra_ut_2" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+          <div class="field col-6"><label for="otra_ut_3">Unidad Territorial adicional 3</label><select id="otra_ut_3" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+          <div class="field col-6"><label for="otra_ut_4">Unidad Territorial adicional 4</label><select id="otra_ut_4" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+          <div class="field col-6"><label for="otra_ut_5">Unidad Territorial adicional 5</label><select id="otra_ut_5" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+          <div class="field col-6"><label for="otra_ut_6">Unidad Territorial adicional 6</label><select id="otra_ut_6" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+          <div class="field col-6"><label for="otra_ut_7">Unidad Territorial adicional 7</label><select id="otra_ut_7" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+          <div class="field col-6"><label for="otra_ut_8">Unidad Territorial adicional 8</label><select id="otra_ut_8" class="otra-ut" disabled><option value="">Seleccione una UT</option></select></div>
+        </div>
+      </section>
+
+      <h2 class="section-title">Solicitud y documentos</h2>
+      <div class="grid">
+        <div class="field col-6"><label for="medio_solicitud">Medio de solicitud</label><select id="medio_solicitud"><option>Escrito</option><option>Oficio</option><option>Otro</option></select></div>
+        <div class="field col-6"><label for="archivos">PDF o imágenes</label><input id="archivos" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"></div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-secondary" href="../casos/consulta.html">Guardar y salir</a>
+        <button id="submitButton" class="btn btn-primary" type="submit">Guardar y siguiente</button>
+      </div>
+    </form>
+  </main>
+  <script type="module" src="../assets/js/fase1.js"></script>
 </body>
 </html>
-
