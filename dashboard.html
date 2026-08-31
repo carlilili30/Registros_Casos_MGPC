@@ -1,0 +1,33 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Inicio</title>
+<link rel="stylesheet" href="assets/css/styles.css"></head>
+<body><div id="appHeader"></div>
+<main class="container"><div id="message" class="alert hidden"></div>
+<div class="page-title"><div><h1>Panel de control</h1>
+</div>
+<a class="btn btn-primary" href="fases/fase1-registro.html">Nuevo registro</a>
+</div>
+<div class="grid"><div class="card stat col-4"><span>Total</span>
+<strong id="total">0</strong>
+</div>
+<div class="card stat col-4"><span>En proceso</span>
+<strong id="process">0</strong>
+</div>
+<div class="card stat col-4"><span>Concluidos</span>
+<strong id="done">0</strong>
+</div>
+</div>
+<div class="card table-wrap"><table><thead><tr><th>Folio</th>
+<th>Distrito</th>
+<th>Clasificación</th>
+<th>Fase</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="recent"></tbody>
+</table>
+</div>
+</main>
+<script type="module" src="assets/js/dashboard.js"></script>
+</body>
+</html>
+
