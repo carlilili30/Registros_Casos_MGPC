@@ -9,7 +9,8 @@ export const CONFIG = {
     files: 'archivos',
     users: 'usuarios',
     caseFiles: 'casos_archivos',
-    territorial: 'seccxut'
+    territorial: 'seccxut',
+    caseAdditionalUTs: 'casos_ut_adicionales'
   },
 
   maxFileMB: 25,
