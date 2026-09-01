@@ -20,7 +20,7 @@ const resumenOtrasUt = qs('#resumenOtrasUt');
 let timer = null;
 let seleccionada = null;
 let units = [];
-const fields = 'id_seccxut,claveUT,nombreUT,seccionesC,seccionesP';
+const fields = 'id_seccxut,dtto,claveDT,nombreDT,claveUT,nombreUT,seccionesC,seccionesP';
 
 function v(objeto, ...claves) {
   for (const key of claves) {
@@ -68,17 +68,45 @@ function seleccionarUT(row) {
 
 async function sugerirUT(campo, texto, lista) {
   lista.innerHTML = '<li>Buscando...</li>';
-  try {
-    const params = new URLSearchParams({campo, q: texto, fields, limit: '10'});
-    const path = `/suggest/${CONFIG.tables.territorial}?${params.toString()}`;
-    const response = await fetch(`${CONFIG.proxyUrl}?path=${encodeURIComponent(path)}`);
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(json.error || json.message || `Error API ${response.status}`);
 
-    const rows = Array.isArray(json.data) ? json.data : [];
+  try {
+    const distrito = numeroDistrito();
+
+    if (!distrito) {
+      throw new Error('No se encontró un distrito válido en la sesión.');
+    }
+
+    if (!['claveUT', 'nombreUT'].includes(campo)) {
+      throw new Error('Campo de búsqueda no permitido.');
+    }
+
+    const params = new URLSearchParams({
+      campo,
+      q: texto,
+      dtto: String(distrito),
+      fields,
+      limit: '10'
+    });
+
+    const path = `/suggest/${CONFIG.tables.territorial}?${params.toString()}`;
+    console.log('Ruta suggest filtrada por dtto:', path);
+
+    const response = await fetch(
+      `${CONFIG.proxyUrl}?path=${encodeURIComponent(path)}`
+    );
+    const json = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(json.error || json.message || `Error API ${response.status}`);
+    }
+
+    const resultados = Array.isArray(json.data) ? json.data : [];
+    const rows = resultados.filter(row => Number(v(row, 'dtto')) === distrito);
+
     lista.innerHTML = '';
+
     if (!rows.length) {
-      lista.innerHTML = '<li>Sin resultados</li>';
+      lista.innerHTML = `<li>Sin resultados en el Distrito ${distrito}</li>`;
       return;
     }
 
@@ -86,12 +114,16 @@ async function sugerirUT(campo, texto, lista) {
       const li = document.createElement('li');
       li.className = 'ut-opcion';
       li.tabIndex = 0;
+      li.setAttribute('role', 'option');
+
       const claveTexto = document.createElement('span');
       claveTexto.className = 'ut-opcion-clave';
       claveTexto.textContent = v(row, 'claveUT') || 'Sin clave';
+
       const nombreTexto = document.createElement('span');
       nombreTexto.className = 'ut-opcion-nombre';
       nombreTexto.textContent = v(row, 'nombreUT') || 'Sin nombre';
+
       li.append(claveTexto, nombreTexto);
       li.addEventListener('click', () => seleccionarUT(row));
       li.addEventListener('keydown', event => {
@@ -100,16 +132,17 @@ async function sugerirUT(campo, texto, lista) {
           seleccionarUT(row);
         }
       });
+
       lista.appendChild(li);
     });
   } catch (error) {
+    console.error('Error al consultar suggest:', error);
     lista.innerHTML = '';
     const li = document.createElement('li');
     li.textContent = `Error: ${error.message}`;
     lista.appendChild(li);
   }
 }
-
 function activarBusqueda(input, campo, lista, otraLista) {
   input.addEventListener('input', () => {
     clearTimeout(timer);
@@ -129,22 +162,49 @@ function obtenerSelectsOtrasUT() {
 }
 
 async function cargarUTDistrito() {
-  const numero = numeroDistrito();
-  if (!numero) return;
   try {
+    // Consulta general para las UT adicionales, sin filtrar por dtto ni claveDT.
     const response = await API.search(CONFIG.tables.territorial, {
-      filters: {claveDT: numero},
+      filters: {},
       operator: 'AND',
-      fields: ['id_seccxut', 'claveUT', 'nombreUT', 'seccionesC', 'seccionesP'],
-      limit: 5000
+      fields: [
+        'id_seccxut',
+        'dtto',
+        'claveDT',
+        'nombreDT',
+        'claveUT',
+        'nombreUT',
+        'seccionesC',
+        'seccionesP'
+      ],
+      limit: 5000,
+      offset: 0
     });
+
     units = Array.isArray(response.data) ? response.data : [];
+
+    // Orden alfanumérico ascendente por claveUT.
+    units.sort((a, b) =>
+      String(v(a, 'claveUT')).trim().localeCompare(
+        String(v(b, 'claveUT')).trim(),
+        'es',
+        {
+          numeric: true,
+          sensitivity: 'base'
+        }
+      )
+    );
+
     llenarOpcionesOtrasUT();
   } catch (error) {
-    console.error('No fue posible cargar las UT del distrito:', error);
+    units = [];
+    console.error('No fue posible cargar las UT adicionales:', error);
+    notify(
+      error.message || 'No fue posible cargar las UT adicionales.',
+      'error'
+    );
   }
 }
-
 function llenarOpcionesOtrasUT() {
   const selects = obtenerSelectsOtrasUT();
   if (!selects.length) return;
@@ -238,6 +298,15 @@ function validarOtrasUT() {
   return valores;
 }
 
+async function guardarOtrasUT(idCaso, idsSeccxut) {
+  for (const idSeccxut of idsSeccxut) {
+    await API.create(CONFIG.tables.caseAdditionalUTs, {
+      id_caso: Number(idCaso),
+      id_seccxut: Number(idSeccxut)
+    });
+  }
+}
+
 function obtenerDatosContacto() {
   return {
     nombre_solicitante: qs('#nombre_solicitante').value.trim(),
@@ -322,6 +391,8 @@ form.addEventListener('submit', async event => {
     const creacion = await API.create(CONFIG.tables.cases, datosCaso);
     const idCaso = creacion.id;
     if (!idCaso) throw new Error('La API no devolvió el identificador del caso.');
+
+    await guardarOtrasUT(idCaso, otrasUT);
 
     await API.update(CONFIG.tables.cases, idCaso, {
       folio: crearFolio(numero, idCaso),

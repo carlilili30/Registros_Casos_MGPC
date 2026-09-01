@@ -1,12 +1,9 @@
-import { CONFIG } from './config.js';
+import {CONFIG} from './config.js';
 
-async function request(
-  path,
-  { method = 'GET', body = null, headers = {} } = {}
-) {
+async function request(path, {method = 'GET', body = null, headers = {}} = {}) {
   const options = {
     method,
-    headers: { ...headers }
+    headers: {...headers}
   };
 
   if (body instanceof FormData) {
@@ -16,8 +13,8 @@ async function request(
     options.body = JSON.stringify(body);
   }
 
-  // La API key nunca se manda desde JavaScript.
-  // api-proxy.php selecciona lectura o escritura segun el endpoint.
+  // La API key no se envía desde JavaScript.
+  // api-proxy.php selecciona la llave de lectura o escritura según la ruta.
   const response = await fetch(
     `${CONFIG.proxyUrl}?path=${encodeURIComponent(path)}`,
     options
@@ -34,12 +31,8 @@ async function request(
 
   if (!response.ok) {
     const message =
-      data &&
-      typeof data === 'object' &&
-      !(data instanceof Blob)
-        ? (data.error ||
-           data.message ||
-           `Error API ${response.status}`)
+      data && typeof data === 'object' && !(data instanceof Blob)
+        ? (data.error || data.message || `Error API ${response.status}`)
         : `Error API ${response.status}`;
 
     throw new Error(message);
@@ -49,45 +42,40 @@ async function request(
 }
 
 export const API = {
-  // Lectura
-  list: (table, { limit = 100, offset = 0 } = {}) =>
+  list: (table, {limit = 100, offset = 0} = {}) =>
     request(`/data/${table}?limit=${limit}&offset=${offset}`),
 
   record: (table, id) =>
     request(`/record/${table}/${encodeURIComponent(id)}`),
 
   filter: (table, params = {}) =>
-    request(
-      `/filter/${table}?${new URLSearchParams(params).toString()}`
-    ),
+    request(`/filter/${table}?${new URLSearchParams(params).toString()}`),
 
-  // Aunque usa POST, /search es una operacion de lectura.
   search: (table, body) =>
     request(`/search/${table}`, {
       method: 'POST',
       body
     }),
 
-  info: (table) =>
+  info: table =>
     request(`/info/${table}`),
 
-  // Escritura
   create: (table, properties) =>
     request(`/create/${table}`, {
       method: 'POST',
-      body: { properties }
+      body: {properties}
     }),
 
   update: (table, id, properties) =>
     request(`/update/${table}/${encodeURIComponent(id)}`, {
       method: 'PUT',
-      body: { properties }
+      body: {properties}
     }),
 
   patch: (table, id, properties) =>
     request(`/patch/${table}/${encodeURIComponent(id)}`, {
       method: 'PATCH',
-      body: { properties }
+      body: {properties}
     }),
 
   remove: (table, id) =>
@@ -102,8 +90,5 @@ export const API = {
     }),
 
   fileUrl: (table, id) =>
-    `${CONFIG.proxyUrl}?path=${encodeURIComponent(
-      `/file/${table}/${id}`
-    )}`
+    `${CONFIG.proxyUrl}?path=${encodeURIComponent(`/file/${table}/${id}`)}`
 };
-
