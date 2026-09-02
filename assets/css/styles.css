@@ -516,3 +516,171 @@ tbody tr:hover {
     display: block;
   }
 }
+
+/* ==========================================================
+   Fase 1: Solicitud y documentos
+   Alinea cada checkbox junto a su texto y mantiene dos columnas.
+   ========================================================== */
+.solicitud-documentos {
+  margin-top: 24px;
+}
+
+.solicitud-documentos .documentos-ayuda {
+  margin: 0 0 16px;
+}
+
+#documentosChecklist,
+.documentos-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  width: 100%;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+#documentosChecklist > label,
+.documentos-checklist > .documento-opcion {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  margin: 0;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  color: var(--gris-oscuro);
+  background: var(--blanco);
+  border: 1px solid var(--gris-claro);
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#documentosChecklist > label:hover,
+.documentos-checklist > .documento-opcion:hover {
+  background: rgba(209, 191, 219, 0.18);
+  border-color: var(--lila);
+}
+
+#documentosChecklist > label:has(input:checked),
+.documentos-checklist > .documento-opcion:has(input:checked) {
+  background: rgba(209, 191, 219, 0.30);
+  border-color: var(--morado);
+}
+
+#documentosChecklist input.tipoDoc[type="checkbox"],
+.documentos-checklist input.tipoDoc[type="checkbox"] {
+  position: static;
+  display: block;
+  float: none;
+  justify-self: start;
+  width: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--morado);
+}
+
+#documentosChecklist .documento-texto,
+.documentos-checklist .documento-texto,
+.documentos-checklist .documento-opcion > span {
+  display: block;
+  justify-self: start;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  color: var(--gris-oscuro);
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+}
+
+#contenedorDocumentos {
+  margin-top: 18px;
+}
+
+#contenedorDocumentos:empty {
+  display: none;
+}
+
+#contenedorDocumentos .field {
+  padding: 14px 16px;
+  background: var(--gris-muy-claro);
+  border: 1px solid var(--gris-claro);
+  border-radius: 9px;
+}
+
+#contenedorDocumentos input[type="file"] {
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  #documentosChecklist,
+  .documentos-checklist {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Selector de archivos dentro de cada tarjeta documental */
+#documentosChecklist .documento-opcion {
+  display: block;
+  min-height: 58px;
+  padding: 0;
+  overflow: hidden;
+}
+
+#documentosChecklist .documento-encabezado {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  margin: 0;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+#documentosChecklist .documento-opcion.seleccionado {
+  border-color: var(--morado);
+  background: rgba(209, 191, 219, 0.18);
+}
+
+#documentosChecklist .documento-carga-interna {
+  display: grid;
+  gap: 8px;
+  padding: 0 16px 16px 50px;
+  border-top: 1px solid var(--gris-claro);
+  background: var(--blanco);
+}
+
+#documentosChecklist .documento-archivo-label {
+  margin-top: 12px;
+  color: var(--morado);
+  font-weight: 700;
+}
+
+#documentosChecklist .documento-carga-interna input[type="file"] {
+  width: 100%;
+  margin: 0;
+  padding: 9px;
+  box-sizing: border-box;
+  background: var(--blanco);
+  border: 1px solid var(--gris-claro);
+  border-radius: 8px;
+}
+
+@media (max-width: 700px) {
+  #documentosChecklist .documento-carga-interna {
+    padding-left: 16px;
+  }
+}

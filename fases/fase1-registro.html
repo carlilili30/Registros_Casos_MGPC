@@ -32,6 +32,17 @@
     .ut-opcion-clave { display: block; font-weight: 700; }
     .ut-opcion-nombre { display: block; margin-top: 2px; }
   </style>
+
+  <style id="documentosOrdenados">
+    #documentosChecklist { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px !important; width:100% !important; margin:16px 0 0 !important; padding:0 !important; }
+    #documentosChecklist > label { display:grid !important; grid-template-columns:22px minmax(0,1fr) !important; align-items:center !important; column-gap:12px !important; width:100% !important; min-height:58px !important; margin:0 !important; padding:14px 16px !important; box-sizing:border-box !important; border:1px solid #d4dae4 !important; border-radius:8px !important; background:#fff !important; text-align:left !important; cursor:pointer !important; }
+    #documentosChecklist > label:hover { border-color:#6b3154 !important; background:#faf5f8 !important; }
+    #documentosChecklist input[type="checkbox"] { position:static !important; display:block !important; float:none !important; width:18px !important; min-width:18px !important; max-width:18px !important; height:18px !important; min-height:18px !important; margin:0 !important; padding:0 !important; justify-self:start !important; accent-color:#6b3154; }
+    #documentosChecklist .documento-texto { display:block !important; width:auto !important; margin:0 !important; padding:0 !important; justify-self:start !important; font-weight:600 !important; line-height:1.3 !important; text-align:left !important; white-space:normal !important; }
+    #contenedorDocumentos { margin-top:16px !important; }
+    #contenedorDocumentos:empty { display:none !important; }
+    @media (max-width:700px) { #documentosChecklist { grid-template-columns:1fr !important; } }
+  </style>
 </head>
 <body data-phase="1">
   <div id="appHeader"></div>
@@ -93,26 +104,20 @@
 
       <h2 class="section-title">Datos de contacto</h2>
       <div class="grid">
-        <div class="field col-6">
-          <label for="nombre_solicitante" class="required">Nombre del solicitante</label>
-          <input id="nombre_solicitante" name="nombre_solicitante" type="text" maxlength="200" autocomplete="name" required>
-        </div>
-        <div class="field col-3">
-          <label for="telefono">Teléfono</label>
-          <input id="telefono" name="telefono" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="Ej. 5512345678">
-        </div>
-        <div class="field col-3">
-          <label for="correo">Correo</label>
-          <input id="correo" name="correo" type="email" maxlength="200" autocomplete="email" placeholder="correo@ejemplo.com">
-        </div>
-        <div class="field col-12">
-          <label for="domicilio">Domicilio</label>
-          <textarea id="domicilio" name="domicilio" maxlength="10000" rows="3"></textarea>
+        <div class="field col-4">
+          <label for="cantidad_personas" class="required">¿Cuántas personas se registrarán?</label>
+          <input id="cantidad_personas" name="cantidad_personas" type="number" min="1" max="100" step="1" value="1" required>
+          <small class="muted">Se mostrará un formulario por persona. Solamente el nombre es obligatorio.</small>
         </div>
       </div>
+      <div id="contenedorSolicitantes"></div>
 
       <h2 class="section-title">Caso</h2>
       <div class="grid">
+        <div class="field col-4">
+          <label for="fecha_solicitud" class="required">Fecha de solicitud</label>
+          <input id="fecha_solicitud" name="fecha_solicitud" type="date" required>
+        </div>
         <div class="field col-4">
           <label for="clasificacion" class="required">Clasificación</label>
           <select id="clasificacion" name="clasificacion" required>
@@ -138,7 +143,7 @@
         <div id="cantidadOtrasUtField" class="field col-4 hidden">
           <label for="cantidad_otras_ut" class="required">¿Cuántas UT adicionales involucra?</label>
           <input id="cantidad_otras_ut" name="cantidad_otras_ut" type="number" min="1" max="20" step="1" placeholder="Ej. 2" disabled>
-          <!-- <small class="muted">Puede agregar entre 1 y 20 unidades adicionales.</small> -->
+          <small class="muted">Puede agregar entre 1 y 20 unidades adicionales.</small>
         </div>
 
         <div class="field col-12">
@@ -153,19 +158,19 @@
         <div id="contenedorOtrasUt" class="grid"></div>
       </section>
 
-      <h2 class="section-title">Solicitud y documentos</h2>
-      <div class="grid">
-        <div class="field col-6">
-          <label for="medio_solicitud">Medio de solicitud</label>
-          <select id="medio_solicitud" name="medio_solicitud">
-            <option>Escrito</option><option>Oficio</option><option>Otro</option>
-          </select>
+      <section aria-labelledby="tituloSolicitudDocumentos">
+        <h2 id="tituloSolicitudDocumentos" class="section-title">Solicitud y documentos</h2>
+        <p class="muted">Marque el tipo de documento para habilitar la selección de archivos.</p>
+        <div id="documentosChecklist">
+          <label><input type="checkbox" class="tipoDoc" value="Planos"><span class="documento-texto">Planos</span></label>
+          <label><input type="checkbox" class="tipoDoc" value="Oficios"><span class="documento-texto">Oficios</span></label>
+          <label><input type="checkbox" class="tipoDoc" value="Correos"><span class="documento-texto">Correos</span></label>
+          <label><input type="checkbox" class="tipoDoc" value="Escritos de solicitud"><span class="documento-texto">Escritos de solicitud</span></label>
+          <label><input type="checkbox" class="tipoDoc" value="Fotografías"><span class="documento-texto">Fotografías</span></label>
+          <label><input type="checkbox" class="tipoDoc" value="Otros"><span class="documento-texto">Otros</span></label>
         </div>
-        <div class="field col-6">
-          <label for="archivos">PDF o imágenes</label>
-          <input id="archivos" type="file" multiple accept=".pdf,.jpg,.jpeg,.png">
-        </div>
-      </div>
+        <div id="contenedorDocumentos" class="grid" aria-live="polite"></div>
+      </section>
 
       <div class="actions">
         <a class="btn btn-secondary" href="../casos/consulta.html">Guardar y salir</a>
@@ -173,6 +178,6 @@
       </div>
     </form>
   </main>
-  <script type="module" src="../assets/js/fase1.js"></script>
+  <script type="module" src="../assets/js/fase1.js?v=20260902-4"></script>
 </body>
 </html>

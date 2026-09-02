@@ -6,14 +6,15 @@ export const CONFIG = {
   tables: {
     cases: 'casos',
     phases: 'seguimiento_fases',
-    files: 'archivos ',
+    files: 'archivos',
     users: 'usuarios',
     caseFiles: 'casos_archivos',
+    caseApplicants: 'casos_solicitantes',
     territorial: 'seccxut',
     caseAdditionalUTs: 'casos_ut_adicionales'
   },
 
-  maxFileMB: 25,
+  maxFileMB: 100,
 
   allowedFiles: [
     'application/pdf',

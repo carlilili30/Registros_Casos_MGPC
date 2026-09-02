@@ -16,6 +16,9 @@ const cantidadField = qs('#cantidadOtrasUtField');
 const cantidadInput = qs('#cantidad_otras_ut');
 const contenedorOtrasUt = qs('#contenedorOtrasUt');
 const resumenOtrasUt = qs('#resumenOtrasUt');
+const cantidadPersonas = qs('#cantidad_personas');
+const contenedorSolicitantes = qs('#contenedorSolicitantes');
+const contenedorDocumentos = qs('#contenedorDocumentos');
 
 let timer = null;
 let seleccionada = null;
@@ -307,23 +310,157 @@ async function guardarOtrasUT(idCaso, idsSeccxut) {
   }
 }
 
-function obtenerDatosContacto() {
-  return {
-    nombre_solicitante: qs('#nombre_solicitante').value.trim(),
-    telefono: qs('#telefono').value.trim(),
-    correo: qs('#correo').value.trim(),
-    domicilio: qs('#domicilio').value.trim()
-  };
+function leerSolicitantesActuales() {
+  if (!contenedorSolicitantes) return [];
+  return qsa('.solicitante-card', contenedorSolicitantes).map(card => ({
+    nombre_solicitante: card.querySelector('.sol_nombre')?.value.trim() || '',
+    telefono: card.querySelector('.sol_telefono')?.value.trim() || '',
+    correo: card.querySelector('.sol_correo')?.value.trim() || '',
+    domicilio: card.querySelector('.sol_domicilio')?.value.trim() || ''
+  }));
 }
 
-function validarDatosContacto(datos) {
-  if (!datos.nombre_solicitante) throw new Error('Escriba el nombre del solicitante.');
-  if (datos.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.correo)) throw new Error('Escriba un correo electrónico válido.');
-  if (datos.telefono && !/^[0-9+\s()\-]{7,20}$/.test(datos.telefono)) throw new Error('El teléfono contiene caracteres no válidos.');
+function generarSolicitantes(cantidad) {
+  if (!contenedorSolicitantes) return;
+  const anteriores = leerSolicitantesActuales();
+  contenedorSolicitantes.innerHTML = '';
+  if (!Number.isInteger(cantidad) || cantidad < 1) return;
+
+  for (let i = 0; i < cantidad; i++) {
+    const numero = i + 1;
+    const datos = anteriores[i] || {};
+    const card = document.createElement('section');
+    card.className = 'card solicitante-card';
+    card.innerHTML = `
+      <h3>Solicitante ${numero}</h3>
+      <div class="grid">
+        <div class="field col-6">
+          <label for="sol_nombre_${numero}" class="required">Nombre del solicitante</label>
+          <input id="sol_nombre_${numero}" class="sol_nombre" type="text" maxlength="200" required>
+        </div>
+        <div class="field col-3">
+          <label for="sol_telefono_${numero}">Teléfono</label>
+          <input id="sol_telefono_${numero}" class="sol_telefono" type="tel" maxlength="30">
+        </div>
+        <div class="field col-3">
+          <label for="sol_correo_${numero}">Correo</label>
+          <input id="sol_correo_${numero}" class="sol_correo" type="email" maxlength="150">
+        </div>
+        <div class="field col-12">
+          <label for="sol_domicilio_${numero}">Domicilio</label>
+          <textarea id="sol_domicilio_${numero}" class="sol_domicilio" rows="3"></textarea>
+        </div>
+      </div>`;
+    contenedorSolicitantes.appendChild(card);
+    card.querySelector('.sol_nombre').value = datos.nombre_solicitante || '';
+    card.querySelector('.sol_telefono').value = datos.telefono || '';
+    card.querySelector('.sol_correo').value = datos.correo || '';
+    card.querySelector('.sol_domicilio').value = datos.domicilio || '';
+  }
+}
+
+function obtenerSolicitantes() {
+  const personas = leerSolicitantesActuales();
+  if (!personas.length) throw new Error('Debe registrar al menos una persona solicitante.');
+  personas.forEach((persona, i) => {
+    if (!persona.nombre_solicitante) throw new Error(`Escriba el nombre del solicitante ${i + 1}.`);
+    if (persona.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(persona.correo)) throw new Error(`El correo del solicitante ${i + 1} no es válido.`);
+  });
+  return personas;
+}
+
+async function guardarSolicitantes(idCaso, personas) {
+  for (let i = 0; i < personas.length; i++) {
+    await API.create(CONFIG.tables.caseApplicants, {
+      id_caso: Number(idCaso),
+      nombre: personas[i].nombre_solicitante,
+      telefono: personas[i].telefono || null,
+      correo: personas[i].correo || null,
+      domicilio: personas[i].domicilio || null,
+      principal: i === 0 ? 1 : 0
+    });
+  }
+}
+
+function idDocumento(tipo) {
+  return `doc_${tipo.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '_')}`;
+}
+
+function alternarDocumento(checkbox) {
+  if (!contenedorDocumentos) return;
+  const tipo = checkbox.value;
+  const id = idDocumento(tipo);
+  const existente = document.getElementById(id);
+
+  if (!checkbox.checked) {
+    existente?.remove();
+    return;
+  }
+  if (existente) return;
+
+  const campo = document.createElement('div');
+  campo.id = id;
+  campo.className = 'field col-6 documento-carga';
+  campo.innerHTML = `
+    <label for="archivo_${id}">Archivos de ${tipo}</label>
+    <input id="archivo_${id}" type="file" class="archivo-documento" data-tipo="${tipo}" multiple accept=".pdf,.jpg,.jpeg,.png">
+    <small class="muted">Puede elegir uno o varios archivos PDF, JPG o PNG.</small>`;
+  contenedorDocumentos.appendChild(campo);
+}
+
+function configurarDocumentos() {
+  qsa('.tipoDoc').forEach(checkbox => {
+    checkbox.addEventListener('change', () => alternarDocumento(checkbox));
+  });
+}
+
+function validarArchivo(archivo) {
+  if (archivo.size > CONFIG.maxFileMB * 1024 * 1024) {
+    throw new Error(`El archivo ${archivo.name} supera ${CONFIG.maxFileMB} MB.`);
+  }
+  if (archivo.type && !CONFIG.allowedFiles.includes(archivo.type)) {
+    throw new Error(`El archivo ${archivo.name} no tiene un formato permitido.`);
+  }
+}
+
+async function guardarDocumentos(idCaso) {
+  const inputs = contenedorDocumentos ? qsa('.archivo-documento', contenedorDocumentos) : [];
+  for (const input of inputs) {
+    const archivos = Array.from(input.files || []);
+    if (!archivos.length) continue;
+    archivos.forEach(validarArchivo);
+
+    const formData = new FormData();
+    archivos.forEach(archivo => formData.append('files[]', archivo));
+    formData.append('descripcion', input.dataset.tipo || 'Documento');
+
+    const carga = await API.upload(CONFIG.tables.files, formData);
+    for (const archivo of carga.subidos || []) {
+      await API.create(CONFIG.tables.caseFiles, {
+        id_caso: Number(idCaso),
+        id_archivo: Number(archivo.id || archivo.id_archivo),
+        fase: 1,
+        nombre_original: archivo.nombre_original || archivo.nombre || null
+      });
+    }
+  }
 }
 
 function crearFolio(numero, id) {
   return `D${String(numero).padStart(2, '0')}-${new Date().getFullYear()}-${String(id).padStart(6, '0')}`;
+}
+
+generarSolicitantes(1);
+configurarDocumentos();
+if (cantidadPersonas) {
+  cantidadPersonas.addEventListener('input', () => {
+    let cantidad = Math.trunc(Number(cantidadPersonas.value));
+    if (cantidad > 100) {
+      cantidad = 100;
+      cantidadPersonas.value = '100';
+    }
+    generarSolicitantes(cantidad >= 1 ? cantidad : 0);
+  });
 }
 
 activarBusqueda(nombre, 'nombreUT', listaNombre, listaClave);
@@ -355,8 +492,8 @@ form.addEventListener('submit', async event => {
     if (!numero) throw new Error('El distrito de la sesión no es válido.');
     if (!seleccionada || !idUT.value) throw new Error('Seleccione una Unidad Territorial de la lista.');
 
-    const contacto = obtenerDatosContacto();
-    validarDatosContacto(contacto);
+    const solicitantes = obtenerSolicitantes();
+    const contacto = solicitantes[0];
     const otrasUT = validarOtrasUT();
 
     const extra = {
@@ -379,10 +516,11 @@ form.addEventListener('submit', async event => {
       correo: contacto.correo,
       domicilio: contacto.domicilio,
       tipo_caso: 'Solicitud',
+      fecha_solicitud: qs('#fecha_solicitud')?.value || null,
       clasificacion: qs('#clasificacion').value,
       involucra_otra_ut: qs('#involucra_otra_ut').value,
       descripcion: qs('#descripcion').value.trim(),
-      medio_solicitud: qs('#medio_solicitud').value,
+      medio_solicitud: qs('#medio_solicitud')?.value || null,
       fase_actual: 1,
       estatus: 'REGISTRADO',
       fecha_registro: localDateTime()
@@ -392,6 +530,7 @@ form.addEventListener('submit', async event => {
     const idCaso = creacion.id;
     if (!idCaso) throw new Error('La API no devolvió el identificador del caso.');
 
+    await guardarSolicitantes(idCaso, solicitantes);
     await guardarOtrasUT(idCaso, otrasUT);
 
     await API.update(CONFIG.tables.cases, idCaso, {
@@ -408,21 +547,7 @@ form.addEventListener('submit', async event => {
       fecha_fin: localDateTime()
     });
 
-    const archivos = Array.from(qs('#archivos').files || []);
-    if (archivos.length) {
-      const formData = new FormData();
-      archivos.forEach(archivo => formData.append('files[]', archivo));
-      formData.append('descripcion', `Caso ${idCaso}, fase 1`);
-      const carga = await API.upload(CONFIG.tables.files, formData);
-      for (const archivo of carga.subidos || []) {
-        await API.create(CONFIG.tables.caseFiles, {
-          id_caso: Number(idCaso),
-          id_archivo: Number(archivo.id),
-          fase: 1,
-          nombre_original: archivo.nombre_original
-        });
-      }
-    }
+    await guardarDocumentos(idCaso);
 
     localStorage.setItem('mgpc_current_case', idCaso);
     location.href = `fase2-sistema-sam.html?id=${idCaso}`;
