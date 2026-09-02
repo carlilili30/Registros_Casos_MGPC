@@ -6,9 +6,9 @@ export const CONFIG = {
   tables: {
     cases: 'casos',
     phases: 'seguimiento_fases',
-    files: 'casos_archivos',
+    files: 'archivos ',
     users: 'usuarios',
-    caseFiles: 'archivos',
+    caseFiles: 'casos_archivos',
     territorial: 'seccxut',
     caseAdditionalUTs: 'casos_ut_adicionales'
   },
