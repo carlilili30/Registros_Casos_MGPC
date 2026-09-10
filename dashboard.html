@@ -4,7 +4,10 @@
 <main class="container"><div id="message" class="alert hidden"></div>
 <div class="page-title"><div><h1>Panel de control</h1>
 </div>
+<div class="actions" style="margin:0">
 <a class="btn btn-primary" href="fases/fase1-registro.html">Nuevo registro</a>
+<a class="btn btn-secondary" href="fases/registro-sin-actualizacion.html">Registro sin casos de actualización</a>
+</div>
 </div>
 <div class="grid"><div class="card stat col-4"><span>Total</span>
 <strong id="total">0</strong>
@@ -16,18 +19,20 @@
 <strong id="done">0</strong>
 </div>
 </div>
-<div class="card table-wrap"><table><thead><tr><th>Folio</th>
+<div class="card table-wrap"><table><thead><tr>
+<th>Folio</th>
 <th>Distrito</th>
 <th>Clasificación</th>
 <th>Fase</th>
-<th></th>
+<th>Estatus</th>
+<th>Acción</th>
 </tr>
 </thead>
 <tbody id="recent"></tbody>
 </table>
 </div>
 </main>
-<script type="module" src="assets/js/dashboard.js"></script>
+<script type="module" src="assets/js/dashboard.js?v=20260910-1"></script>
 </body>
 </html>
 

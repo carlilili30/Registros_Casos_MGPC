@@ -589,8 +589,60 @@ async function guardarDocumentos(idCaso) {
   }
 }
 
-function crearFolio(numero, id) {
-  return `D${String(numero).padStart(2, '0')}-${new Date().getFullYear()}-${String(id).padStart(6, '0')}`;
+function normalizarCatalogo(texto) {
+  return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+}
+
+function codigoClasificacion(valor) {
+  return ({
+    'DIVISION': 'D',
+    'FUSION': 'F',
+    'CAMBIO DE NOMENCLATURA': 'CDN',
+    'INCLUSION/EXCLUSION DE SECCIONES ELECTORALES': 'IoESeccElect',
+    'INCLUSION/EXCLUSION DE MANZANAS ELECTORALES': 'IoEMzasElect',
+    'COMBINACION': 'C',
+    'OTRO': 'O'
+  })[normalizarCatalogo(valor)] || 'O';
+}
+
+function codigoAreaRemitente(valor) {
+  return ({
+    'PRESIDENCIA': 'P',
+    'SECRETARIA EJECUTIVA': 'SE',
+    'OFICINA DE TRANSPARENCIA': 'OT',
+    'OFICINA DE TRANSPARIENCIA': 'OT',
+    'ORGANOS DESCONCENTRADOS': 'OD',
+    'DIRECCION EJECUTIVA DE ORGANIZACION ELECTORAL Y GEOESTADISTICA (DEOEYG)': 'DEOEyG',
+    'OTRO': 'O'
+  })[normalizarCatalogo(valor)] || 'O';
+}
+
+function codigoProcedencia(valor) {
+  return ({'CIUDADANIA': 'C', 'ORGANOS DESCONCENTRADOS': 'OD'})[normalizarCatalogo(valor)] || 'O';
+}
+
+async function obtenerConsecutivoDistrito(distrito, idCasoActual) {
+  const response = await API.search(CONFIG.tables.cases, {
+    filters: { distrito }, operator: 'AND', fields: ['id', 'distrito'], limit: 10000, offset: 0
+  });
+  const ids = (Array.isArray(response?.data) ? response.data : [])
+    .map(registro => Number(v(registro, 'id', 'id_caso')))
+    .filter(id => Number.isInteger(id) && id > 0)
+    .sort((a, b) => a - b);
+  const posicion = ids.indexOf(Number(idCasoActual));
+  return posicion >= 0 ? posicion + 1 : ids.length + 1;
+}
+
+async function crearFolio(numero, idCaso, datosCaso) {
+  const distrito = `D${String(numero).padStart(2, '0')}`;
+  const claveUT = String(clave.value || 'SINUT').trim().replace(/\s+/g, '');
+  const clasificacion = codigoClasificacion(datosCaso.clasificacion);
+  const area = codigoAreaRemitente(datosCaso.area_remitente);
+  const procedencia = codigoProcedencia(datosCaso.procedencia_solicitud);
+  const consecutivoDistrito = await obtenerConsecutivoDistrito(datosCaso.distrito, idCaso);
+  const consecutivoDistrital = `DD${String(consecutivoDistrito).padStart(3, '0')}`;
+  const consecutivoGeneral = `G${String(idCaso).padStart(6, '0')}`;
+  return [distrito, claveUT, clasificacion, area, procedencia, consecutivoDistrital, consecutivoGeneral].join('/');
 }
 
 generarSolicitantes(1);
@@ -680,8 +732,10 @@ form.addEventListener('submit', async event => {
     await guardarSolicitantes(idCaso, solicitantes);
     await guardarOtrasUT(idCaso, otrasUT);
 
+    const folio = await crearFolio(numero, idCaso, datosCaso);
+
     await API.update(CONFIG.tables.cases, idCaso, {
-      folio: crearFolio(numero, idCaso),
+      folio,
       fase_actual: 2
     });
 
@@ -690,7 +744,7 @@ form.addEventListener('submit', async event => {
       fase: 1,
       estatus: 'CONCLUIDA',
       observaciones: 'Registro inicial',
-      datos_json: JSON.stringify(extra),
+      datos_json: JSON.stringify({...extra, folio}),
       fecha_fin: localDateTime()
     });
 

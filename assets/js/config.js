@@ -11,7 +11,8 @@ export const CONFIG = {
     caseFiles: 'casos_archivos',
     caseApplicants: 'casos_solicitantes',
     territorial: 'seccxut',
-    caseAdditionalUTs: 'casos_ut_adicionales'
+    caseAdditionalUTs: 'casos_ut_adicionales',
+    casesWithoutUpdates: 'casos_sin_actualizacion'
   },
 
   maxFileMB: 100,

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Registro sin casos de actualización</title>
+<link rel="stylesheet" href="../assets/css/styles.css">
+<style>
+.confirm-box{padding:22px;border:1px solid #d4dae4;border-radius:8px;background:#fafafa}
+.confirm-row{display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:start;cursor:pointer}
+.confirm-row input{width:18px;height:18px;margin-top:3px;accent-color:#6b3154}
+.folio-result{font-size:1.15rem;font-weight:700;color:#4f2140}
+</style>
+</head>
+<body>
+<div id="appHeader"></div>
+<main class="container">
+<div id="message" class="alert hidden"></div>
+<div class="page-title"><div><h1>Registro sin casos de actualización</h1><p class="muted">Confirme el reporte para generar el folio y descargar el acuse.</p></div></div>
+<form id="sinActualizacionForm" class="card">
+<h2 class="section-title">Datos generales</h2>
+<div class="grid">
+<div class="field col-6"><label for="distrito" class="required">Distrito</label><input id="distrito" type="text" readonly required></div>
+<div class="field col-6"><label for="fecha_registro" class="required">Fecha y hora de registro</label><input id="fecha_registro" type="text" readonly required></div>
+</div>
+<h2 class="section-title">Confirmación</h2>
+<div class="confirm-box">
+<label class="confirm-row" for="confirmacion"><input id="confirmacion" type="checkbox" required><span><strong>Confirmo que, a la fecha y hora indicadas, no existen casos de actualización para reportar en el distrito asignado.</strong><br><small class="muted">Una vez enviado el reporte se generará el folio y se descargará el acuse. El registro no podrá enviarse nuevamente desde esta pantalla.</small></span></label>
+</div>
+<div id="resultado" class="alert hidden" aria-live="polite"><span>Registro concluido. Folio: </span><span id="folioGenerado" class="folio-result"></span></div>
+<div class="actions"><a class="btn btn-secondary" href="../dashboard.html">Cancelar</a><button id="submitButton" class="btn btn-primary" type="submit" disabled>Confirmar, generar folio y descargar acuse</button></div>
+</form>
+</main>
+<script type="module" src="../assets/js/registro-sin-actualizacion.js?v=20260910-1"></script>
+</body>
+</html>
