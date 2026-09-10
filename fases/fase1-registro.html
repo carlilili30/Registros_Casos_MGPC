@@ -76,7 +76,13 @@
         <div class="field col-12">
           <label for="distrito" class="required">Distrito</label>
           <input id="distrito" name="distrito" type="text" readonly required>
-          <small id="districtHelp" class="muted">Distrito asignado al usuario que inició sesión.</small>
+          <!-- <small id="districtHelp" class="muted">Distrito asignado al usuario que inició sesión.</small> -->
+        </div>
+
+        <div class="field col-12">
+          <label for="demarcacion_territorial" class="required">Demarcación Territorial</label>
+          <input id="demarcacion_territorial" name="demarcacion_territorial" type="text" readonly required>
+          <!-- <small id="districtHelp" class="muted">Distrito asignado al usuario que inició sesión.</small> -->
         </div>
 
         <div id="grupoClaveUT" class="field col-6 ut-search-container">
@@ -115,7 +121,7 @@
       <h2 class="section-title">Caso</h2>
       <div class="grid">
         <div class="field col-4">
-          <label for="fecha_solicitud" class="required">Fecha de solicitud</label>
+          <label for="fecha_solicitud" class="required">Fecha de recepción del caso</label>
           <input id="fecha_solicitud" name="fecha_solicitud" type="date" required>
         </div>
         <div class="field col-4">
@@ -129,6 +135,28 @@
             <option>INCLUSIÓN/EXCLUSIÓN DE MANZANAS ELECTORALES</option>
             <option>COMBINACIÓN</option>
             <option>OTRO</option>
+          </select>
+        </div>
+
+        <div class="field col-4">
+          <label for="area_remitente" class="required">Área remitente</label>
+          <select id="area_remitente" name="area_remitente" required>
+            <option value="">Seleccione</option>
+            <option>PRESIDENCIA</option>
+            <option>SECRETARIA EJECUTIVA</option>
+            <option>OFICINA DE TRANSPARENCIA</option>
+            <option>ÓRGANOS DESCONCENTRADOS</option>
+            <option>DIRECCIÓN EJECUTIVA DE ORGANIZACIÓN ELECTORAL Y GEOESTADÍSTICA (DEOEyG)</option>
+            <option>OTRO</option>
+          </select>
+        </div>
+
+        <div class="field col-4">
+          <label for="procedencia_solicitud" class="required">Procedencia de la solicitud</label>
+          <select id="procedencia_solicitud" name="procedencia_solicitud" required>
+            <option value="">Seleccione</option>
+            <option>CIUDADANÍA</option>
+            <option>ÓRGANOS DESCONCENTRADOS</option>
           </select>
         </div>
 
@@ -167,7 +195,6 @@
           <label><input type="checkbox" class="tipoDoc" value="Correos"><span class="documento-texto">Correos</span></label>
           <label><input type="checkbox" class="tipoDoc" value="Escritos de solicitud"><span class="documento-texto">Escritos de solicitud</span></label>
           <label><input type="checkbox" class="tipoDoc" value="Fotografías"><span class="documento-texto">Fotografías</span></label>
-          <label><input type="checkbox" class="tipoDoc" value="Otros"><span class="documento-texto">Otros</span></label>
         </div>
         <div id="contenedorDocumentos" class="grid" aria-live="polite"></div>
       </section>
@@ -178,6 +205,6 @@
       </div>
     </form>
   </main>
-  <script type="module" src="../assets/js/fase1.js?v=20260902-4"></script>
+  <script type="module" src="../assets/js/fase1.js?v=20260910-12"></script>
 </body>
 </html>

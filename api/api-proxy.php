@@ -77,26 +77,46 @@ $options = [
 
 if ($endpoint === 'upload' && $method === 'POST') {
     $postFields = $_POST;
-    foreach ($_FILES as $field => $file) {
+    $archivo = null;
+    $tmpName = '';
+    $mimeType = 'application/octet-stream';
+    $fileName = '';
+
+    // Recuperar el primer archivo valido, sin importar si llega como file o files[].
+    foreach ($_FILES as $file) {
         if (is_array($file['name'])) {
             foreach ($file['name'] as $index => $name) {
-                if (($file['error'][$index] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-                    // Conserva files[] para que la API reconozca la carga multiple.
-                    $postFields[$field . '[' . $index . ']'] = new CURLFile(
-                        $file['tmp_name'][$index],
-                        $file['type'][$index] ?: 'application/octet-stream',
-                        $name
-                    );
+                if (($file['error'][$index] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                    continue;
                 }
+                $tmpName = (string)$file['tmp_name'][$index];
+                $mimeType = (string)($file['type'][$index] ?: 'application/octet-stream');
+                $fileName = (string)$name;
+                break 2;
             }
         } elseif (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
-            $postFields[$field] = new CURLFile(
-                $file['tmp_name'],
-                $file['type'] ?: 'application/octet-stream',
-                $file['name']
-            );
+            $tmpName = (string)$file['tmp_name'];
+            $mimeType = (string)($file['type'] ?: 'application/octet-stream');
+            $fileName = (string)$file['name'];
+            break;
         }
     }
+
+    if ($tmpName === '' || $fileName === '' || !is_uploaded_file($tmpName)) {
+        errorJson(400, 'El proxy no recibio un archivo valido.', [
+            'campos_recibidos' => array_keys($_FILES),
+            'upload_max_filesize' => ini_get('upload_max_filesize'),
+            'post_max_size' => ini_get('post_max_size')
+        ]);
+    }
+
+    // Enviar ambos nombres aceptados por las distintas versiones de la API.
+    $postFields['file'] = new CURLFile($tmpName, $mimeType, $fileName);
+    $postFields['files[]'] = new CURLFile($tmpName, $mimeType, $fileName);
+
+    // Evitar problemas de negociacion Expect: 100-continue en cargas multipart.
+    $headers[] = 'Expect:';
+    $options[CURLOPT_HTTPHEADER] = $headers;
     $options[CURLOPT_POSTFIELDS] = $postFields;
 } elseif (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
     $body = file_get_contents('php://input');

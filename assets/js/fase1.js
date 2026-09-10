@@ -6,6 +6,7 @@ initShell();
 
 const form = qs('#phaseForm');
 const dist = qs('#distrito');
+const demarcacionTerritorial = qs('#demarcacion_territorial');
 const nombre = qs('#nombreUT');
 const clave = qs('#claveUT');
 const idUT = qs('#id_seccxut');
@@ -14,6 +15,7 @@ const listaClave = qs('#resultadosClaveUT');
 const otherBox = qs('#otrasUtSection');
 const cantidadField = qs('#cantidadOtrasUtField');
 const cantidadInput = qs('#cantidad_otras_ut');
+const involucraOtraUT = qs('#involucra_otra_ut');
 const contenedorOtrasUt = qs('#contenedorOtrasUt');
 const resumenOtrasUt = qs('#resumenOtrasUt');
 const cantidadPersonas = qs('#cantidad_personas');
@@ -23,7 +25,7 @@ const contenedorDocumentos = qs('#contenedorDocumentos');
 let timer = null;
 let seleccionada = null;
 let units = [];
-const fields = 'id_seccxut,dtto,claveDT,nombreDT,claveUT,nombreUT,seccionesC,seccionesP';
+const fields = 'id_seccxut,dtto,claveDT,nombreDT,claveUT,nombreUT,seccC,seccP';
 
 function v(objeto, ...claves) {
   for (const key of claves) {
@@ -46,6 +48,53 @@ function fijarDistrito() {
   if (!numero) notify('La sesión mgpc_session no contiene un distrito válido.', 'error');
 }
 
+async function cargarDemarcacionTerritorial() {
+  if (!demarcacionTerritorial) return;
+
+  const sesion = getSession() || {};
+  const demarcacionSesion = v(
+    sesion,
+    'nombreDT',
+    'demarcacion_territorial',
+    'demarcacionTerritorial',
+    'alcaldia'
+  );
+
+  if (demarcacionSesion) {
+    demarcacionTerritorial.value = demarcacionSesion;
+    return;
+  }
+
+  const distrito = numeroDistrito();
+  if (!distrito) return;
+
+  demarcacionTerritorial.value = 'Cargando...';
+
+  try {
+    const response = await API.search(CONFIG.tables.territorial, {
+      filters: { dtto: distrito },
+      operator: 'AND',
+      fields: ['dtto', 'nombreDT'],
+      limit: 1,
+      offset: 0
+    });
+
+    const filas = Array.isArray(response?.data) ? response.data : [];
+    const fila = filas.find(item => Number(v(item, 'dtto')) === distrito) || filas[0];
+    const nombreDemarcacion = v(fila, 'nombreDT');
+
+    if (!nombreDemarcacion) {
+      throw new Error(`No se encontró la demarcación territorial del Distrito ${distrito}.`);
+    }
+
+    demarcacionTerritorial.value = nombreDemarcacion;
+  } catch (error) {
+    demarcacionTerritorial.value = '';
+    console.error('Error al cargar la demarcación territorial:', error);
+    notify(error.message || 'No fue posible cargar la demarcación territorial.', 'error');
+  }
+}
+
 function cerrarResultados() {
   listaNombre.innerHTML = '';
   listaClave.innerHTML = '';
@@ -58,15 +107,54 @@ function limpiarSeleccion() {
   qs('#seccionesP').value = '';
 }
 
-function seleccionarUT(row) {
+function valorSecciones(row, completa) {
+  const claves = completa
+    ? ['seccC', 'secciones_c', 'seccionesCompletas', 'secciones_completas']
+    : ['seccP', 'secciones_p', 'seccionesParciales', 'secciones_parciales'];
+  return v(row, ...claves);
+}
+
+async function cargarSeccionesUT(row) {
+  const id = String(v(row, 'id_seccxut', 'id'));
+  let detalle = units.find(unit => String(v(unit, 'id_seccxut', 'id')) === id) || row;
+  let completas = valorSecciones(detalle, true);
+  let parciales = valorSecciones(detalle, false);
+
+  // Si suggest no regresó las secciones y la lista general aún no terminó de cargar,
+  // consulta directamente el registro territorial seleccionado.
+  if (!completas && !parciales && id) {
+    try {
+      const response = await API.search(CONFIG.tables.territorial, {
+        filters: { id_seccxut: Number(id) },
+        operator: 'AND',
+        fields: ['id_seccxut', 'seccC', 'seccP'],
+        limit: 1,
+        offset: 0
+      });
+      detalle = Array.isArray(response?.data) ? response.data[0] : null;
+      completas = valorSecciones(detalle, true);
+      parciales = valorSecciones(detalle, false);
+    } catch (error) {
+      console.error('No fue posible consultar las secciones de la UT:', error);
+    }
+  }
+
+  qs('#seccionesC').value = completas || '';
+  qs('#seccionesP').value = parciales || '';
+}
+
+async function seleccionarUT(row) {
   seleccionada = row;
   idUT.value = v(row, 'id_seccxut', 'id');
   clave.value = v(row, 'claveUT');
   nombre.value = v(row, 'nombreUT');
-  qs('#seccionesC').value = v(row, 'seccionesC');
-  qs('#seccionesP').value = v(row, 'seccionesP');
+  if (demarcacionTerritorial) demarcacionTerritorial.value = v(row, 'nombreDT');
+  qs('#seccionesC').value = 'Cargando...';
+  qs('#seccionesP').value = 'Cargando...';
   cerrarResultados();
   llenarOpcionesOtrasUT();
+  await cargarSeccionesUT(row);
+  console.log('DATOS COMPLETOS DE LA UT:', row);
 }
 
 async function sugerirUT(campo, texto, lista) {
@@ -173,18 +261,24 @@ async function cargarUTDistrito() {
       fields: [
         'id_seccxut',
         'dtto',
+        'nombreDT',
         'claveDT',
         'nombreDT',
         'claveUT',
         'nombreUT',
-        'seccionesC',
-        'seccionesP'
+        'seccC',
+        'seccP'
       ],
       limit: 5000,
       offset: 0
     });
 
     units = Array.isArray(response.data) ? response.data : [];
+    const distritoActual = numeroDistrito();
+    const unidadDistrito = units.find(unit => Number(v(unit, 'dtto')) === distritoActual);
+    if (demarcacionTerritorial && unidadDistrito) {
+      demarcacionTerritorial.value = v(unidadDistrito, 'nombreDT');
+    }
 
     // Orden alfanumérico ascendente por claveUT.
     units.sort((a, b) =>
@@ -266,7 +360,7 @@ function generarCamposOtrasUT(cantidad) {
 }
 
 function alternarOtrasUT() {
-  const si = qs('#involucra_otra_ut').value === 'Sí';
+  const si = involucraOtraUT?.value === 'Sí';
   cantidadField.classList.toggle('hidden', !si);
   cantidadInput.disabled = !si;
   cantidadInput.required = si;
@@ -284,7 +378,7 @@ function alternarOtrasUT() {
 }
 
 function validarOtrasUT() {
-  if (qs('#involucra_otra_ut').value !== 'Sí') return [];
+  if (involucraOtraUT?.value !== 'Sí') return [];
 
   const cantidad = Number(cantidadInput.value);
   if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 20) {
@@ -382,6 +476,34 @@ async function guardarSolicitantes(idCaso, personas) {
   }
 }
 
+const REGLAS_DOCUMENTOS = {
+  Planos: {
+    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png',
+    extensiones: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+    ayuda: 'PDF, DOC, DOCX, JPG, JPEG o PNG'
+  },
+  Oficios: {
+    accept: '.pdf,.doc,.docx',
+    extensiones: ['pdf', 'doc', 'docx'],
+    ayuda: 'PDF, DOC o DOCX'
+  },
+  Correos: {
+    accept: '.eml,.msg,.pdf',
+    extensiones: ['eml', 'msg', 'pdf'],
+    ayuda: 'EML, MSG o PDF'
+  },
+  'Escritos de solicitud': {
+    accept: '.pdf',
+    extensiones: ['pdf'],
+    ayuda: 'PDF'
+  },
+  'Fotografías': {
+    accept: '.jpg,.jpeg,.png',
+    extensiones: ['jpg', 'jpeg', 'png'],
+    ayuda: 'JPG, JPEG o PNG'
+  }
+};
+
 function idDocumento(tipo) {
   return `doc_${tipo.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]/g, '_')}`;
 }
@@ -389,6 +511,7 @@ function idDocumento(tipo) {
 function alternarDocumento(checkbox) {
   if (!contenedorDocumentos) return;
   const tipo = checkbox.value;
+  const regla = REGLAS_DOCUMENTOS[tipo];
   const id = idDocumento(tipo);
   const existente = document.getElementById(id);
 
@@ -396,15 +519,15 @@ function alternarDocumento(checkbox) {
     existente?.remove();
     return;
   }
-  if (existente) return;
+  if (existente || !regla) return;
 
   const campo = document.createElement('div');
   campo.id = id;
   campo.className = 'field col-6 documento-carga';
   campo.innerHTML = `
     <label for="archivo_${id}">Archivos de ${tipo}</label>
-    <input id="archivo_${id}" type="file" class="archivo-documento" data-tipo="${tipo}" multiple accept=".pdf,.jpg,.jpeg,.png">
-    <small class="muted">Puede elegir uno o varios archivos PDF, JPG o PNG.</small>`;
+    <input id="archivo_${id}" type="file" class="archivo-documento" data-tipo="${tipo}" multiple accept="${regla.accept}">
+    <small class="muted">Puede elegir uno o varios archivos: ${regla.ayuda}.</small>`;
   contenedorDocumentos.appendChild(campo);
 }
 
@@ -414,34 +537,54 @@ function configurarDocumentos() {
   });
 }
 
-function validarArchivo(archivo) {
+function extensionArchivo(nombreArchivo) {
+  const partes = String(nombreArchivo || '').toLowerCase().split('.');
+  return partes.length > 1 ? partes.pop() : '';
+}
+
+function validarArchivo(archivo, tipo) {
+  const regla = REGLAS_DOCUMENTOS[tipo];
+  if (!regla) throw new Error(`El tipo de documento ${tipo} no está permitido.`);
   if (archivo.size > CONFIG.maxFileMB * 1024 * 1024) {
     throw new Error(`El archivo ${archivo.name} supera ${CONFIG.maxFileMB} MB.`);
   }
-  if (archivo.type && !CONFIG.allowedFiles.includes(archivo.type)) {
-    throw new Error(`El archivo ${archivo.name} no tiene un formato permitido.`);
+  const extension = extensionArchivo(archivo.name);
+  if (!regla.extensiones.includes(extension)) {
+    throw new Error(`El archivo ${archivo.name} no es válido para ${tipo}. Formatos permitidos: ${regla.ayuda}.`);
   }
 }
 
 async function guardarDocumentos(idCaso) {
   const inputs = contenedorDocumentos ? qsa('.archivo-documento', contenedorDocumentos) : [];
   for (const input of inputs) {
+    const tipo = input.dataset.tipo || '';
     const archivos = Array.from(input.files || []);
     if (!archivos.length) continue;
-    archivos.forEach(validarArchivo);
 
-    const formData = new FormData();
-    archivos.forEach(archivo => formData.append('files[]', archivo));
-    formData.append('descripcion', input.dataset.tipo || 'Documento');
+    for (const archivoOriginal of archivos) {
+      validarArchivo(archivoOriginal, tipo);
+      const formData = new FormData();
+      formData.append('file', archivoOriginal, archivoOriginal.name);
+      formData.append('descripcion', tipo);
 
-    const carga = await API.upload(CONFIG.tables.files, formData);
-    for (const archivo of carga.subidos || []) {
-      await API.create(CONFIG.tables.caseFiles, {
-        id_caso: Number(idCaso),
-        id_archivo: Number(archivo.id || archivo.id_archivo),
-        fase: 1,
-        nombre_original: archivo.nombre_original || archivo.nombre || null
-      });
+      const carga = await API.upload(CONFIG.tables.files, formData);
+      const subidos = Array.isArray(carga?.subidos)
+        ? carga.subidos
+        : (carga?.id || carga?.id_archivo ? [carga] : []);
+      if (!subidos.length) {
+        throw new Error(`La API no devolvió el identificador del archivo ${archivoOriginal.name}.`);
+      }
+
+      for (const archivoSubido of subidos) {
+        const idArchivo = Number(archivoSubido.id || archivoSubido.id_archivo);
+        if (!idArchivo) throw new Error(`No se recibió un identificador válido para ${archivoOriginal.name}.`);
+        await API.create(CONFIG.tables.caseFiles, {
+          id_caso: Number(idCaso),
+          id_archivo: idArchivo,
+          fase: 1,
+          nombre_original: archivoSubido.nombre_original || archivoSubido.nombre || archivoOriginal.name
+        });
+      }
     }
   }
 }
@@ -468,8 +611,9 @@ activarBusqueda(clave, 'claveUT', listaClave, listaNombre);
 document.addEventListener('click', event => {
   if (!event.target.closest('.ut-search-container')) cerrarResultados();
 });
-qs('#involucra_otra_ut').addEventListener('change', alternarOtrasUT);
+involucraOtraUT?.addEventListener('change', alternarOtrasUT);
 cantidadInput.addEventListener('input', () => {
+  if (involucraOtraUT?.value !== 'Sí') return;
   let cantidad = Number(cantidadInput.value);
   if (cantidad > 20) {
     cantidad = 20;
@@ -510,6 +654,7 @@ form.addEventListener('submit', async event => {
     const datosCaso = {
       folio: null,
       distrito: dist.value,
+      demarcacion_territorial: demarcacionTerritorial?.value.trim() || null,
       unidad_territorial: `${clave.value.trim()} · ${nombre.value.trim()}`,
       nombre_solicitante: contacto.nombre_solicitante,
       telefono: contacto.telefono,
@@ -518,7 +663,9 @@ form.addEventListener('submit', async event => {
       tipo_caso: 'Solicitud',
       fecha_solicitud: qs('#fecha_solicitud')?.value || null,
       clasificacion: qs('#clasificacion').value,
-      involucra_otra_ut: qs('#involucra_otra_ut').value,
+      area_remitente: qs('#area_remitente').value,
+      procedencia_solicitud: qs('#procedencia_solicitud').value,
+      involucra_otra_ut: involucraOtraUT?.value || 'No',
       descripcion: qs('#descripcion').value.trim(),
       medio_solicitud: qs('#medio_solicitud')?.value || null,
       fase_actual: 1,
@@ -560,5 +707,6 @@ form.addEventListener('submit', async event => {
 });
 
 fijarDistrito();
+cargarDemarcacionTerritorial();
 alternarOtrasUT();
 cargarUTDistrito();
