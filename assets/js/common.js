@@ -7,9 +7,6 @@ export function getCaseId(){return new URLSearchParams(location.search).get('id'
 export function initShell(){const s=requireSession();if(!s)return;const nested=/\/(fases|casos|catalogos)\//.test(location.pathname),p=nested?'../':'';qs('#appHeader').innerHTML=`<header class="app-header"><div class="header-inner"><a class="brand" href="${p}dashboard.html">SCCMGPC <small>Registro y seguimiento</small>
 </a>
 <nav class="nav"><a href="${p}dashboard.html">Inicio</a>
-<a href="${p}fases/fase1-registro.html">Nuevo caso</a>
-<a href="${p}casos/consulta.html">Consulta</a>
-<a href="${p}casos/expediente.html">Expediente</a>
 <a href="#" id="logout">Salir</a>
 </nav>
 </div>
