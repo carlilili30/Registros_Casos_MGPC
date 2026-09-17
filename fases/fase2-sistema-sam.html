@@ -5,53 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fase 2. Sistema SAM</title>
   <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="stylesheet" href="../assets/css/menu-fix.css">
   <style>
-    .external-phase-frame {
-      width: 100%;
-      min-height: 640px;
-      border: 0;
-      display: block;
-      background: #fff;
-    }
-    .phase-loading { padding: 1rem; text-align: center; }
-    .phase-actions { margin-top: 1rem; }
+    #appHeader{position:relative;z-index:10000}.external-phase-frame{position:relative;z-index:1;width:100%;min-height:640px;border:0;display:block;background:#fff}.phase-loading{padding:1rem;text-align:center}.phase-actions{margin-top:1rem}
   </style>
 </head>
 <body data-phase="2">
   <div id="appHeader"></div>
-
   <main class="container">
     <div id="message" class="alert hidden"></div>
-
-    <div class="page-title">
-      <div>
-        <h1>Fase 2. Sistema SAM</h1>
-        <p class="muted">Complete la información en el sistema integrado para continuar.</p>
-      </div>
-    </div>
-
-    <div class="card">
-      <div id="caseInfo" class="muted"></div>
-      <div id="timeline" class="timeline"></div>
-    </div>
-
+    <div class="page-title"><div><h1>Fase 2. Sistema SAM</h1><p class="muted">Complete la información en el sistema integrado para continuar.</p></div></div>
+    <div class="card"><div id="caseInfo" class="muted"></div><div id="timeline" class="timeline"></div></div>
     <section id="externalPhaseCard" class="card">
       <div id="phaseLoading" class="phase-loading">Cargando Sistema SAM...</div>
-      <iframe
-        id="externalPhaseFrame"
-        class="external-phase-frame hidden"
-        title="Sistema SAM"
-        scrolling="no"
-        loading="eager"
-        referrerpolicy="strict-origin-when-cross-origin">
-      </iframe>
-
-      <div class="actions phase-actions">
-        <a class="btn btn-secondary" href="../casos/consulta.html">Guardar y salir</a>
-      </div>
+      <iframe id="externalPhaseFrame" class="external-phase-frame hidden" title="Sistema SAM" scrolling="no" loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      <div class="actions phase-actions"><a class="btn btn-secondary" href="../casos/consulta.html">Guardar y salir</a></div>
     </section>
   </main>
-
-  <script type="module" src="../assets/js/phase-common.js"></script>
+  <script type="module" src="../assets/js/fase2-sistema-sam.js"></script>
 </body>
 </html>
