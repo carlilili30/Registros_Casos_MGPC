@@ -1,7 +1,9 @@
 export const CONFIG = {
-  // Ruta absoluta porque el sistema esta en /sitios/SCCMGPCCOPIA/
-  // y hay HTML dentro de subcarpetas como /fases y /casos.
+  // Ruta del proxy
   proxyUrl: '/sitios/SCCMGPCCOPIA/api/api-proxy.php',
+
+  // URL del sistema SAM que se mostrará dentro de la Fase 2
+  phase2ExternalUrl: 'http://145.0.50.112/Sistema_encuestas_MGPC/index.html',
 
   tables: {
     cases: 'casos',
