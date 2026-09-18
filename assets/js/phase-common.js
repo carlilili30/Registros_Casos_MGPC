@@ -6,7 +6,7 @@ initShell()
 
 const phase = Number(document.body.dataset.phase)
 const id = getCaseId()
-const labels = ['Registro','Sistema SAM','Encuestas','Portal SAM','Integración','Expediente','Revisión CG','Cédula']
+const labels = ['Registro','Cálculo de Encuestas','Encuestas','Portal SAM','Integración','Expediente','Revisión CG','Cédula']
 let currentCase = null
 let externalOrigin = ''
 let phaseCompleted = false

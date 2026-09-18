@@ -5,7 +5,7 @@ import {qs,notify,initShell,getCaseId,localDateTime,esc} from './common.js'
 initShell()
 
 const id = getCaseId()
-const labels = ['Registro','Sistema SAM','Encuestas','Portal SAM','Integración','Expediente','Revisión CG','Cédula']
+const labels = ['Registro','Cálculo de Encuestas','Encuestas','Portal SAM','Integración','Expediente','Revisión CG','Cédula']
 let currentCase = null
 let phase1Data = {}
 let involvedUTs = []
