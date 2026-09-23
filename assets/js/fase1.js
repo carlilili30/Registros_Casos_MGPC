@@ -16,6 +16,8 @@ const otherBox = qs('#otrasUtSection');
 const cantidadField = qs('#cantidadOtrasUtField');
 const cantidadInput = qs('#cantidad_otras_ut');
 const involucraOtraUT = qs('#involucra_otra_ut');
+const involucraOtraUTField = involucraOtraUT?.closest('.field');
+const clasificacionSelect = qs('#clasificacion');
 const contenedorOtrasUt = qs('#contenedorOtrasUt');
 const resumenOtrasUt = qs('#resumenOtrasUt');
 const cantidadPersonas = qs('#cantidad_personas');
@@ -377,6 +379,34 @@ function alternarOtrasUT() {
   if (Number.isInteger(cantidad) && cantidad >= 1) generarCamposOtrasUT(cantidad);
 }
 
+function actualizarInvolucraOtraUT() {
+  if (!involucraOtraUT) return;
+
+  const clasificacion = normalizarCatalogo(clasificacionSelect?.value || '');
+  const permitidas = [
+    'FUSION',
+    'INCLUSION/EXCLUSION DE SECCIONES ELECTORALES',
+    'INCLUSION/EXCLUSION DE MANZANAS ELECTORALES',
+    'COMBINACION'
+  ];
+  const mostrar = permitidas.includes(clasificacion);
+
+  involucraOtraUTField?.classList.toggle('hidden', !mostrar);
+  involucraOtraUT.disabled = !mostrar;
+
+  if (!mostrar) {
+    involucraOtraUT.value = 'No';
+    cantidadInput.value = '';
+    cantidadInput.disabled = true;
+    cantidadInput.required = false;
+    cantidadField.classList.add('hidden');
+    contenedorOtrasUt.innerHTML = '';
+    resumenOtrasUt.textContent = '';
+    otherBox.classList.add('hidden');
+  }
+
+  alternarOtrasUT();
+}
 function validarOtrasUT() {
   if (involucraOtraUT?.value !== 'Sí') return [];
 
@@ -664,6 +694,7 @@ document.addEventListener('click', event => {
   if (!event.target.closest('.ut-search-container')) cerrarResultados();
 });
 involucraOtraUT?.addEventListener('change', alternarOtrasUT);
+clasificacionSelect?.addEventListener('change', actualizarInvolucraOtraUT);
 cantidadInput.addEventListener('input', () => {
   if (involucraOtraUT?.value !== 'Sí') return;
   let cantidad = Number(cantidadInput.value);
@@ -762,5 +793,5 @@ form.addEventListener('submit', async event => {
 
 fijarDistrito();
 cargarDemarcacionTerritorial();
-alternarOtrasUT();
+actualizarInvolucraOtraUT();
 cargarUTDistrito();
