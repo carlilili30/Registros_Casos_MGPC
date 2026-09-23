@@ -146,10 +146,14 @@ async function finish(result = {}) {
     currentCase = {...currentCase, fase_actual: 3}
     renderCase(currentCase)
 
-    const button = qs('#continuePhase3')
-    if (button) {
+    const actions = qs('.phase-actions')
+    if (actions && !qs('#continuePhase3')) {
+      const button = document.createElement('a')
+      button.id = 'continuePhase3'
+      button.className = 'btn btn-primary'
       button.href = `fase3-encuestas.html?id=${encodeURIComponent(id)}`
-      button.classList.remove('hidden')
+      button.textContent = 'Continuar a Fase 3'
+      actions.appendChild(button)
     }
 
     notify('La exportación de Excel concluyó la Fase 2. Puede continuar a la Fase 3.', 'success')
