@@ -143,7 +143,16 @@ async function finish(result = {}) {
       fase_actual: 3
     })
 
-    location.href = `fase3-encuestas.html?id=${encodeURIComponent(id)}`
+    currentCase = {...currentCase, fase_actual: 3}
+    renderCase(currentCase)
+
+    const button = qs('#continuePhase3')
+    if (button) {
+      button.href = `fase3-encuestas.html?id=${encodeURIComponent(id)}`
+      button.classList.remove('hidden')
+    }
+
+    notify('La exportación de Excel concluyó la Fase 2. Puede continuar a la Fase 3.', 'success')
   } catch (error) {
     completed = false
     notify(error.message || 'No fue posible concluir la Fase 2.', 'error')
@@ -196,8 +205,20 @@ async function init() {
       return
     }
 
-    if (message.tipo === 'ETAPA_COMPLETADA' || message.tipo === 'FASE_2_COMPLETADA') {
-      await finish(message.resultado || {})
+    // Solo la exportación de resultados en Excel concluye la Fase 2.
+    // Los eventos generados por Analizar y calcular muestra no avanzan el caso.
+    if (message.tipo === 'MGPC_FASE_2_COMPLETADA') {
+      const messageCaseId = Number(message.idCaso || message.caseId || id)
+      if (messageCaseId !== Number(id)) return
+
+      const excel = message.excel
+      const exportacionExcel = Boolean(
+        excel && typeof excel === 'object' &&
+        String(excel.filename || excel.nombre || '').trim()
+      )
+      if (!exportacionExcel) return
+
+      await finish({...(message.resultado || message.result || {}), excel})
       return
     }
 
