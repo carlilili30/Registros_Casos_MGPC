@@ -1,33 +1,56 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fase 3</title>
-<link rel="stylesheet" href="../assets/css/styles.css"></head>
-<body data-phase="3"><div id="appHeader"></div>
-<main class="container"><div id="message" class="alert hidden"></div>
-<div class="page-title"><div><h1>Fase 3. Encuestas</h1>
-<p class="muted">Complete la información para continuar.</p>
-</div>
-</div>
-<div class="card"><div id="caseInfo" class="muted"></div>
-<div id="timeline" class="timeline"></div>
-</div>
-<form id="phaseForm" class="card"><div class="grid"><div class="field col-4"><label class="required">Resultado de encuestas</label>
-<select name="resultado" required><option value="">Seleccione</option>
-<option>Procedente</option>
-<option>No procedente</option>
-<option>En proceso</option>
-</select>
-</div>
-<div class="field col-12"><label>Observaciones</label>
-<textarea name="observaciones"></textarea>
-</div>
-<div class="field col-12"><label>Documentos</label>
-<input id="archivos" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"></div>
-</div>
-<div class="actions"><a class="btn btn-secondary" href="../casos/consulta.html">Guardar y salir</a>
-<button class="btn btn-primary" type="submit">Guardar y siguiente</button>
-</div>
-</form>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fase 3. Encuestas</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <style>
+    .section-title{margin:0 0 14px;color:#4b286d}.phase-help{margin-top:6px;font-size:.9rem}.summary-box{padding:14px;border:1px solid #ddd;border-radius:8px;background:#fafafa}.file-list{margin:10px 0 0;padding-left:20px}.hidden{display:none!important}.method-note{padding:12px;border-left:4px solid #00a499;background:#f2fbfa}.radio-group{display:flex;flex-wrap:wrap;gap:14px}.radio-option{display:flex;align-items:center;gap:7px}.result-preview{font-weight:700;color:#4b286d}
+  </style>
+</head>
+<body data-phase="3">
+<div id="appHeader"></div>
+<main class="container">
+  <div id="message" class="alert hidden"></div>
+  <div class="page-title"><div><h1>Fase 3. Encuestas</h1><p class="muted">Registre el método, levantamiento, resultados y evidencias de las encuestas.</p></div></div>
+  <div class="card"><div id="caseInfo" class="muted"></div><div id="timeline" class="timeline"></div></div>
+
+  <form id="phaseForm" class="card">
+    <h2 class="section-title">1. Determinación del método</h2>
+    <div class="grid">
+      <div class="field col-4"><label>Clasificación del caso</label><input id="clasificacionCaso" type="text" readonly></div>
+      <div class="field col-8"><label class="required" for="situacionEncuesta">Situación del caso</label><select id="situacionEncuesta" name="situacion_encuesta" required><option value="">Seleccione</option></select></div>
+      <div class="field col-12"><label class="required">Modelo de encuesta aplicable</label><div id="metodosEncuesta" class="radio-group"></div><div id="metodoNota" class="method-note hidden"></div></div>
+    </div>
+
+    <div id="levantamientoSection">
+      <h2 class="section-title">2. Información del levantamiento</h2>
+      <div class="grid">
+        <div class="field col-4"><label for="claveUtEncuesta">Clave de la UT</label><input id="claveUtEncuesta" name="clave_ut_encuesta" type="text" placeholder="Ej. 12-047"></div>
+        <div class="field col-4"><label for="fechaInicio">Fecha de inicio</label><input id="fechaInicio" name="fecha_inicio" type="date"></div>
+        <div class="field col-4"><label for="fechaFin">Fecha de término</label><input id="fechaFin" name="fecha_fin" type="date"></div>
+        <div class="field col-6"><label for="encuestasProgramadas">Encuestas programadas</label><input id="encuestasProgramadas" name="encuestas_programadas" type="number" min="0" step="1"></div>
+        <div class="field col-6"><label for="encuestasAplicadas">Encuestas aplicadas</label><input id="encuestasAplicadas" name="encuestas_aplicadas" type="number" min="0" step="1"></div>
+      </div>
+
+      <h2 class="section-title">3. Resultados</h2>
+      <div class="grid">
+        <div class="field col-4"><label for="respuestasFavor">Respuestas a favor</label><input id="respuestasFavor" name="respuestas_favor" type="number" min="0" step="1" value="0"></div>
+        <div class="field col-4"><label for="respuestasContra">Respuestas en contra</label><input id="respuestasContra" name="respuestas_contra" type="number" min="0" step="1" value="0"></div>
+        <div class="field col-4"><label for="sinRespuesta">Sin respuesta u otra</label><input id="sinRespuesta" name="sin_respuesta" type="number" min="0" step="1" value="0"></div>
+        <div class="field col-6"><label>Resultado por mayoría simple</label><div id="resultadoCalculado" class="summary-box result-preview">Sin resultado</div><input id="resultado" name="resultado" type="hidden" value="Sin resultado"></div>
+        <div class="field col-6"><label for="estatusLevantamiento">Estatus del levantamiento</label><select id="estatusLevantamiento" name="estatus_levantamiento"><option value="Concluido">Concluido</option><option value="Parcial">Parcial</option><option value="No realizado">No realizado</option></select></div>
+        <div class="field col-12"><label for="comentarios">Comentarios de las personas encuestadas</label><textarea id="comentarios" name="comentarios"></textarea></div>
+        <div class="field col-12"><label for="observaciones">Observaciones</label><textarea id="observaciones" name="observaciones"></textarea></div>
+      </div>
+    </div>
+
+    <h2 class="section-title">4. Evidencia documental</h2>
+    <div class="grid"><div class="field col-12"><label for="archivos">Documentos y evidencias</label><input id="archivos" name="archivos" type="file" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"><p class="muted phase-help">Formatos permitidos: PDF, Word (.doc y .docx), JPG, JPEG y PNG.</p><ul id="listaArchivos" class="file-list"></ul></div></div>
+    <div class="actions"><a class="btn btn-secondary" href="../casos/consulta.html">Guardar y salir</a><button class="btn btn-primary" type="submit">Guardar y siguiente</button></div>
+  </form>
 </main>
 <script type="module" src="../assets/js/phase-common.js"></script>
 </body>
 </html>
-

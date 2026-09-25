@@ -11,6 +11,62 @@ let currentCase = null
 let externalOrigin = ''
 let phaseCompleted = false
 
+const normalizeText = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim()
+const getClaveUT = c => c.claveUT || c.clave_ut || c.clave_ut_origen || c.unidad_territorial || ''
+function surveySituations(classification) {
+  const k=normalizeText(classification)
+  if(k.includes('DIVISION'))return [['copaco','Fraccionamiento sin causa de identidad cultural o desempate','C2'],['ciudadania','División propuesta por identidad cultural','C1'],['no_aplica','Sin COPACO y causa cartográfica o geográfica','NA']]
+  if(k.includes('FUSION'))return [['copaco','Fusión sin causa de identidad cultural o desempate','C2'],['ciudadania','Fusión propuesta por identidad cultural','C1']]
+  if(k.includes('NOMENCLATURA'))return [['copaco','Corrección, precisión, cambio de clasificación o desempate','C2'],['ciudadania','Modificación propuesta por identidad cultural','C1'],['no_aplica','Sin COPACO y corrección, precisión o cambio de clasificación','NA']]
+  if(k.includes('SECCION'))return [['copaco','Desempate de resultados ciudadanos','C2'],['ciudadania','Solicitud ciudadana para trasladar una sección electoral','C1'],['no_aplica','Sin COPACO y actualización cartográfica de sección','NA']]
+  if(k.includes('MANZANA'))return [['copaco','Desempate de resultados ciudadanos','C2'],['ciudadania','Solicitud ciudadana para trasladar una manzana electoral','C1'],['no_aplica','Sin COPACO y actualización cartográfica o área sin vivienda','NA']]
+  if(k.includes('COMBINACION'))return [['copaco','Solicitud sin causa de identidad cultural o desempate','C2'],['ciudadania','Causas relacionadas con identidad cultural','C1'],['no_aplica','Sin COPACO y actualización cartográfica','NA']]
+  return [['ciudadania','Encuesta a personas ciudadanas','C1'],['copaco','Encuesta a integrantes de COPACO','C2'],['no_aplica','No aplica encuesta','NA']]
+}
+function initializePhase3(c){
+  qs('#clasificacionCaso').value=c.clasificacion||'';qs('#claveUtEncuesta').value=getClaveUT(c)
+  const s=qs('#situacionEncuesta');surveySituations(c.clasificacion).forEach(([v,l,m])=>{const o=document.createElement('option');o.value=v;o.textContent=l;o.dataset.model=m;s.appendChild(o)})
+  s.addEventListener('change',()=>renderSurveyMethods(s.selectedOptions[0]?.dataset.model||''))
+  ;['#respuestasFavor','#respuestasContra','#sinRespuesta','#encuestasAplicadas'].forEach(x=>qs(x)?.addEventListener('input',calculateResult))
+  qs('#archivos')?.addEventListener('change',renderSelectedFiles);renderSurveyMethods('');calculateResult()
+}
+function renderSurveyMethods(model){
+  const box=qs('#metodosEncuesta'),note=qs('#metodoNota'),section=qs('#levantamientoSection');let item=null
+  if(model==='C1')item=['MGPC2025-C1','MGPC2025-C1 - Personas ciudadanas']
+  if(model==='C2')item=['MGPC2025-C2','MGPC2025-C2 - Integrantes de COPACO']
+  if(model==='NA')item=['NO_APLICA','No aplica encuesta']
+  box.innerHTML=item?`<label class="radio-option"><input type="radio" name="modelo_encuesta" value="${item[0]}" checked required> ${item[1]}</label>`:'<span class="muted">Seleccione primero la situación del caso.</span>'
+  section?.classList.toggle('hidden',model==='NA');note?.classList.toggle('hidden',!model)
+  if(model)note.textContent=model==='NA'?'No se requiere aplicar encuesta. Adjunte la evidencia o justificación correspondiente.':model==='C1'?'El modelo C1 se dirige a personas ciudadanas directamente involucradas.':'El modelo C2 se dirige a integrantes de COPACO.'
+}
+function calculateResult(){const f=Number(qs('#respuestasFavor')?.value||0),c=Number(qs('#respuestasContra')?.value||0),o=Number(qs('#sinRespuesta')?.value||0),a=Number(qs('#encuestasAplicadas')?.value||0);let r='Sin resultado';if(f>c)r='Mayoría a favor';else if(c>f)r='Mayoría en contra';else if(f>0&&f===c)r='Empate';if(f+c+o>a&&a>0)r='Revisar cantidades capturadas';if(qs('#resultadoCalculado'))qs('#resultadoCalculado').textContent=r;if(qs('#resultado'))qs('#resultado').value=r}
+function renderSelectedFiles(e){const l=qs('#listaArchivos');if(l)l.innerHTML=[...e.target.files].map(f=>`<li>${esc(f.name)}</li>`).join('')}
+function validatePhase3(){if(phase!==3)return;const m=qs('input[name="modelo_encuesta"]:checked')?.value;if(!m)throw new Error('Seleccione la situación y el modelo de encuesta aplicable.');if(m==='NO_APLICA')return;const a=Number(qs('#encuestasAplicadas')?.value||0),t=Number(qs('#respuestasFavor')?.value||0)+Number(qs('#respuestasContra')?.value||0)+Number(qs('#sinRespuesta')?.value||0);if(t>a)throw new Error('La suma de respuestas no puede ser mayor que las encuestas aplicadas.')}
+
+
+function apiRows(response) {
+  if (Array.isArray(response)) return response
+  for (const key of ['data','datos','records','registros','rows','items','result','resultados']) if (Array.isArray(response?.[key])) return response[key]
+  return []
+}
+async function findExisting(table, predicate) {
+  const response=await API.list(table,{limit:10000,offset:0})
+  return apiRows(response).filter(predicate).sort((a,b)=>Number(b.id)-Number(a.id))[0]||null
+}
+async function savePhaseRecord(data) {
+  const payload={id_caso:Number(id),fase:phase,estatus:'CONCLUIDA',observaciones:data.observaciones||'',datos_json:JSON.stringify(data),fecha_fin:localDateTime()}
+  const existing=await findExisting(CONFIG.tables.phases,row=>Number(row.id_caso)===Number(id)&&Number(row.fase)===phase)
+  return existing?.id?API.update(CONFIG.tables.phases,existing.id,payload):API.create(CONFIG.tables.phases,payload)
+}
+async function savePhase3Summary(data) {
+  const favor=Number(data.respuestas_favor||0),contra=Number(data.respuestas_contra||0),sinRespuesta=Number(data.sin_respuesta||0)
+  const fechaAplicacion=data.fecha_fin||data.fecha_inicio||new Date().toISOString().slice(0,10)
+  const respuesta=favor>contra?'A_FAVOR':contra>favor?'EN_CONTRA':'SIN_RESPUESTA'
+  const payload={id_caso:Number(id),modelo_encuesta:qs('input[name="modelo_encuesta"]:checked')?.value||'',situacion_encuesta:data.situacion_encuesta||'',clave_ut:data.clave_ut_encuesta||'',fecha_aplicacion:fechaAplicacion,fecha_inicio:data.fecha_inicio||null,fecha_fin:data.fecha_fin||null,encuestas_programadas:Number(data.encuestas_programadas||0),encuestas_aplicadas:Number(data.encuestas_aplicadas||0),respuestas_favor:favor,respuestas_contra:contra,sin_respuesta:sinRespuesta,resultado:data.resultado||'Sin resultado',estatus_levantamiento:data.estatus_levantamiento||'',respuesta,comentarios:data.comentarios||'',observaciones:data.observaciones||''}
+  const existing=await findExisting(CONFIG.tables.phase3Surveys,row=>Number(row.id_caso)===Number(id))
+  return existing?.id?API.update(CONFIG.tables.phase3Surveys,existing.id,payload):API.create(CONFIG.tables.phase3Surveys,payload)
+}
+
 function renderCase(c) {
   qs('#caseInfo').innerHTML = `Caso: <strong>${esc(c.folio || id)}</strong>`
   qs('#timeline').innerHTML = labels.map((x, i) =>
@@ -129,6 +185,7 @@ async function load() {
   try {
     currentCase = await API.record(CONFIG.tables.cases, id)
     renderCase(currentCase)
+    if (phase === 3) initializePhase3(currentCase)
 
     if (phase === 2) {
       initializeExternalPhase()
@@ -142,13 +199,11 @@ async function load() {
       button.disabled = true
 
       try {
+        validatePhase3()
         const data = formObject(event.currentTarget)
         delete data.archivos
-        await API.create(CONFIG.tables.phases, {
-          id_caso: Number(id), fase: phase, estatus: 'CONCLUIDA',
-          observaciones: data.observaciones || '', datos_json: JSON.stringify(data),
-          fecha_fin: localDateTime()
-        })
+        if (phase === 3) await savePhase3Summary(data)
+        await savePhaseRecord(data)
 
         const files = qs('#archivos')?.files
         if (files?.length) {
