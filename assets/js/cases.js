@@ -77,9 +77,14 @@ if(x.involucra_otra_ut==='Sí'||otrasUT.length){
 
 
 
-html+=`<h2 class="section-title">Documentos</h2>`
+const nombresFase={1:'Fase 1. Registro',2:'Fase 2. Cálculo de Encuestas',3:'Fase 3. Encuestas',4:'Fase 4. Portal SAM',5:'Fase 5. Integración de propuesta',6:'Fase 6. Conformación del expediente',7:'Fase 7. Revisión CG',8:'Fase 8. Cédula de notificación'}
+html+=`<h2 class="section-title">Documentos por fase</h2>`
 if(archivos.length){
-  html+=`<div class="grid">`+archivos.map((a,i)=>`<div class="col-6"><div class="card"><b>Documento ${i+1}</b><p>${esc(mostrar(a.nombre_original))}</p><small>Fase ${esc(mostrar(a.fase))} · ID archivo ${esc(mostrar(a.id_archivo))}</small></div></div>`).join('')+`</div>`
+  const archivosPorFase=archivos.reduce((grupos,archivo)=>{const fase=Number(archivo.fase)||0;(grupos[fase]??=[]).push(archivo);return grupos},{})
+  html+=Object.keys(archivosPorFase).map(Number).sort((a,b)=>a-b).map(fase=>{
+    const titulo=nombresFase[fase]||(fase?`Fase ${fase}`:'Sin fase asignada')
+    return `<div class="card"><h3>${esc(titulo)}</h3><div class="grid">`+archivosPorFase[fase].map((a,i)=>`<div class="col-6"><div class="card"><b>Archivo ${i+1}</b><p>${esc(mostrar(a.nombre_original))}</p><small>ID archivo ${esc(mostrar(a.id_archivo))}</small></div></div>`).join('')+`</div></div>`
+  }).join('')
 }else html+=`<p class="muted">No hay documentos asociados al caso.</p>`
 
 qs('#detail').innerHTML=html
