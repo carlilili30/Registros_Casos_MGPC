@@ -1,13 +1,342 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Detalle</title>
-<link rel="stylesheet" href="../assets/css/styles.css"></head>
-<body><div id="appHeader"></div>
-<main class="container"><div id="message" class="alert hidden"></div>
-<div class="page-title"><h1>Detalle del caso</h1>
-<br><a id="continue" class="btn btn-primary">Continuar proceso</a>
-</div>
-<div id="detail" class="card"></div>
-</main>
-<script type="module" src="../assets/js/cases.js"></script>
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Detalle del caso</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <style>
+    :root {
+      --detail-purple: #4b286d;
+      --detail-purple-dark: #35194e;
+      --detail-purple-soft: #f5f0f8;
+      --detail-green: #00a499;
+      --detail-green-soft: #eaf9f7;
+      --detail-border: #e3e5e8;
+      --detail-text: #24262b;
+      --detail-muted: #68707a;
+      --detail-bg: #f5f6f8;
+      --detail-white: #ffffff;
+      --detail-shadow: 0 8px 24px rgba(34, 24, 48, .08);
+    }
+
+    body {
+      background: var(--detail-bg);
+      color: var(--detail-text);
+    }
+
+    .detail-shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding-bottom: 48px;
+    }
+
+    .detail-hero {
+      position: relative;
+      overflow: hidden;
+      margin: 24px 0 18px;
+      padding: 28px 30px;
+      border-radius: 18px;
+      color: var(--detail-white);
+      background: linear-gradient(125deg, var(--detail-purple-dark), var(--detail-purple) 58%, #704091);
+      box-shadow: var(--detail-shadow);
+    }
+
+    .detail-hero::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -80px;
+      top: -120px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .detail-hero-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .detail-eyebrow {
+      margin: 0 0 7px;
+      color: #d9c7e7;
+      font-size: .79rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .detail-hero h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 3vw, 2.5rem);
+      line-height: 1.12;
+    }
+
+    .detail-hero p {
+      max-width: 730px;
+      margin: 10px 0 0;
+      color: #eee6f4;
+    }
+
+    .detail-hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .detail-hero .btn {
+      position: relative;
+      z-index: 2;
+    }
+
+    .detail-hero .btn-primary {
+      color: var(--detail-purple-dark);
+      background: var(--detail-white);
+      border-color: var(--detail-white);
+    }
+
+    .detail-back {
+      color: var(--detail-white);
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, .55);
+    }
+
+    .detail-back:hover {
+      background: rgba(255, 255, 255, .1);
+    }
+
+    .detail-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 250px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .detail-content {
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .detail-content > .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 0 12px;
+      padding: 0;
+      color: var(--detail-purple);
+      font-size: 1.23rem;
+    }
+
+    .detail-content > .section-title::before {
+      content: "";
+      width: 5px;
+      height: 24px;
+      border-radius: 10px;
+      background: var(--detail-green);
+    }
+
+    .detail-content > .grid,
+    .detail-content > .card,
+    .detail-content > p.muted {
+      margin: 0 0 16px;
+      padding: 20px;
+      border: 1px solid var(--detail-border);
+      border-radius: 15px;
+      background: var(--detail-white);
+      box-shadow: 0 3px 14px rgba(32, 34, 39, .05);
+    }
+
+    .detail-content > .grid {
+      gap: 0;
+    }
+
+    .detail-content > .grid > div {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f1f3;
+    }
+
+    .detail-content > .grid > div:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-content b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--detail-purple-dark);
+      font-size: .8rem;
+      letter-spacing: .025em;
+      text-transform: uppercase;
+    }
+
+    .detail-content p {
+      margin: 0;
+      color: var(--detail-text);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-content small {
+      color: var(--detail-muted);
+    }
+
+    .detail-content .card .card {
+      margin: 0;
+      padding: 15px;
+      border: 1px solid var(--detail-border);
+      border-radius: 12px;
+      background: #fbfbfc;
+      box-shadow: none;
+    }
+
+    .detail-content .card h3 {
+      margin: 0 0 14px;
+      color: var(--detail-purple);
+      font-size: 1rem;
+    }
+
+    .detail-content .card > .grid {
+      gap: 12px;
+    }
+
+    .detail-content .card > p:last-child {
+      margin-top: 14px;
+      padding: 11px 13px;
+      border-radius: 10px;
+      background: var(--detail-green-soft);
+    }
+
+    .detail-side {
+      position: sticky;
+      top: 18px;
+      padding: 18px;
+      border: 1px solid var(--detail-border);
+      border-radius: 15px;
+      background: var(--detail-white);
+      box-shadow: var(--detail-shadow);
+    }
+
+    .detail-side h2 {
+      margin: 0 0 12px;
+      color: var(--detail-purple);
+      font-size: 1.02rem;
+    }
+
+    .detail-side a {
+      display: block;
+      margin: 7px 0;
+      padding: 9px 10px;
+      border-radius: 9px;
+      color: var(--detail-text);
+      text-decoration: none;
+      transition: .18s ease;
+    }
+
+    .detail-side a:hover {
+      color: var(--detail-purple);
+      background: var(--detail-purple-soft);
+    }
+
+    .detail-note {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      color: #335550;
+      background: var(--detail-green-soft);
+      font-size: .87rem;
+      line-height: 1.4;
+    }
+
+    #message:not(.hidden) {
+      margin-top: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .detail-layout {
+        grid-template-columns: 1fr;
+      }
+      .detail-side {
+        position: static;
+        order: -1;
+      }
+      .detail-side nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .detail-side a {
+        display: inline-block;
+        margin: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .detail-hero {
+        padding: 22px 18px;
+        border-radius: 14px;
+      }
+      .detail-hero-actions,
+      .detail-hero-actions .btn {
+        width: 100%;
+      }
+      .detail-content > .grid,
+      .detail-content > .card {
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="appHeader"></div>
+
+  <main class="container detail-shell">
+    <div id="message" class="alert hidden"></div>
+
+    <header class="detail-hero">
+      <div class="detail-hero-content">
+        <div>
+          <p class="detail-eyebrow">Seguimiento del proceso</p>
+          <h1>Detalle del caso</h1>
+          <p>Consulta los datos generales, la información registrada en cada fase y los documentos asociados.</p>
+        </div>
+        <div class="detail-hero-actions">
+          <a class="btn detail-back" href="consulta.html">Volver a consulta</a>
+          <a id="continue" class="btn btn-primary">Continuar proceso</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="detail-layout">
+      <section id="detail" class="detail-content" aria-live="polite">
+        <div class="card">
+          <p class="muted">Cargando información del caso...</p>
+        </div>
+      </section>
+
+      <aside class="detail-side">
+        <h2>Navegación rápida</h2>
+        <nav>
+          <a href="#detail">Datos generales</a>
+          <a href="#detail">Unidades adicionales</a>
+          <a href="#detail">Fase 2</a>
+          <a href="#detail">Fase 3</a>
+          <a href="#detail">Documentos por fase</a>
+        </nav>
+        <div class="detail-note">
+          La información se obtiene directamente de los registros asociados al caso.
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module" src="../assets/js/cases.js"></script>
 </body>
 </html>
-
